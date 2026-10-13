@@ -88,87 +88,115 @@ export function makeCanvasTexture(paint, bounds, size = 1024) {
   return texture
 }
 
+function traceShape(ctx, shape, bounds, size) {
+  const points = shape.getPoints(120)
+  ctx.beginPath()
+  points.forEach((point, index) => {
+    const [px, py] = toCanvas(bounds, point.x, point.y, size)
+    if (index === 0) ctx.moveTo(px, py)
+    else ctx.lineTo(px, py)
+  })
+  ctx.closePath()
+}
+
 export function paintStrawberry(ctx, size, bounds) {
-  const core = { x: 0, y: -0.02 }
-  const [cx, cy] = toCanvas(bounds, core.x, core.y, size)
-  const gradient = ctx.createRadialGradient(cx, cy, size * 0.02, cx, cy, size * 0.62)
-  gradient.addColorStop(0, '#f8d5dc')
-  gradient.addColorStop(0.42, '#f27d90')
-  gradient.addColorStop(0.78, '#e84b62')
-  gradient.addColorStop(1, '#e2324a')
-  ctx.fillStyle = gradient
+  const shape = strawberryShape()
+  const span = Math.max(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY, 1e-5)
+  const unit = size / span
+
+  ctx.fillStyle = '#E2324A'
   ctx.fillRect(0, 0, size, size)
 
-  ctx.save()
-  ctx.translate(cx, cy)
-  ctx.scale(0.55, 1)
-  const heart = ctx.createRadialGradient(0, 0, size * 0.01, 0, 0, size * 0.11)
-  heart.addColorStop(0, '#fff7f8')
-  heart.addColorStop(0.45, '#f8dce2')
-  heart.addColorStop(1, 'rgba(248, 220, 226, 0)')
-  ctx.fillStyle = heart
-  ctx.beginPath()
-  ctx.ellipse(0, 0, size * 0.11, size * 0.11, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
+  const [gx, gy] = toCanvas(bounds, 0, 0.02, size)
+  const pulp = ctx.createRadialGradient(gx, gy, unit * 0.04, gx, gy, unit * 0.58)
+  pulp.addColorStop(0, '#F7B7C0')
+  pulp.addColorStop(0.62, '#ef7388')
+  pulp.addColorStop(1, '#E2324A')
 
-  ctx.strokeStyle = 'rgba(176, 42, 64, 0.38)'
-  ctx.lineWidth = Math.max(1, size * 0.0028)
+  ctx.save()
+  traceShape(ctx, shape, bounds, size)
+  ctx.clip()
+  ctx.fillStyle = pulp
+  ctx.fillRect(0, 0, size, size)
+
+  const coreTop = toCanvas(bounds, 0, 0.4, size)
+  const coreLeft = toCanvas(bounds, -0.075, 0.16, size)
+  const coreRight = toCanvas(bounds, 0.075, 0.16, size)
+  const coreBottom = toCanvas(bounds, 0, -0.02, size)
+  const [hx, hy] = toCanvas(bounds, 0, 0.22, size)
+  const core = ctx.createRadialGradient(hx, hy, unit * 0.01, hx, hy, unit * 0.2)
+  core.addColorStop(0, '#fff7f8')
+  core.addColorStop(0.55, '#f8d5dc')
+  core.addColorStop(1, 'rgba(247, 183, 192, 0)')
+  ctx.fillStyle = core
+  ctx.beginPath()
+  ctx.moveTo(coreTop[0], coreTop[1])
+  ctx.bezierCurveTo(coreLeft[0], coreTop[1], coreLeft[0], coreLeft[1], coreLeft[0], coreLeft[1])
+  ctx.bezierCurveTo(coreLeft[0], coreBottom[1], coreBottom[0], coreBottom[1], coreBottom[0], coreBottom[1])
+  ctx.bezierCurveTo(coreRight[0], coreBottom[1], coreRight[0], coreRight[1], coreRight[0], coreRight[1])
+  ctx.bezierCurveTo(coreRight[0], coreTop[1], coreTop[0], coreTop[1], coreTop[0], coreTop[1])
+  ctx.fill()
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.78)'
+  ctx.lineWidth = Math.max(1, unit * 0.008)
   ctx.lineCap = 'round'
-  for (let i = 0; i < 18; i += 1) {
-    const angle = (i / 18) * Math.PI * 2 + 0.2
-    const start = 0.07 + (i % 3) * 0.012
-    const end = 0.22 + (i % 4) * 0.04
-    const [x1, y1] = toCanvas(
-      bounds,
-      core.x + Math.cos(angle) * start,
-      core.y + Math.sin(angle) * start * 1.7,
-      size,
-    )
-    const [x2, y2] = toCanvas(
-      bounds,
-      core.x + Math.cos(angle) * end,
-      core.y + Math.sin(angle) * end * 1.7,
-      size,
-    )
+  for (let i = 0; i < 12; i += 1) {
+    const angle = -0.7 + (i / 11) * 2.5
+    const reach = 0.16 + (i % 3) * 0.035
+    const [x1, y1] = toCanvas(bounds, Math.sin(angle) * 0.03, 0.22 - Math.cos(angle) * 0.04, size)
+    const [x2, y2] = toCanvas(bounds, Math.sin(angle) * reach, 0.18 - Math.cos(angle) * reach * 0.85, size)
     ctx.beginPath()
     ctx.moveTo(x1, y1)
     ctx.lineTo(x2, y2)
     ctx.stroke()
   }
 
-  const outline = strawberryShape().getPoints(72)
-  const center = shapeCenter(strawberryShape())
-  outline.forEach((point, index) => {
-    if (index % 4 !== 0) return
-    const x = point.x + (center.x - point.x) * 0.12
-    const y = point.y + (center.y - point.y) * 0.12
-    if (y > 0.55) return
-    const next = outline[(index + 1) % outline.length]
-    const tangent = Math.atan2(next.y - point.y, next.x - point.x)
-    const [sx, sy] = toCanvas(bounds, x, y, size)
-    paintSeed(ctx, sx, sy, size * 0.012, size * 0.007, -tangent, '#f6d15a', '#c4921c')
-  })
+  ctx.restore()
+
+  traceShape(ctx, shape, bounds, size)
+  ctx.strokeStyle = '#E2324A'
+  ctx.lineWidth = unit * 0.1
+  ctx.lineJoin = 'round'
+  ctx.stroke()
+
+  const seeds = [
+    { x: 0.36, y: 0.24, rot: -0.45 },
+    { x: 0.43, y: 0.08, rot: -0.15 },
+    { x: 0.4, y: -0.08, rot: 0.2 },
+    { x: 0.33, y: -0.24, rot: 0.55 },
+    { x: 0.22, y: -0.38, rot: 0.9 },
+    { x: 0.08, y: -0.48, rot: 1.15 },
+    { x: -0.34, y: 0.2, rot: 0.5 },
+    { x: -0.42, y: 0.02, rot: 0.15 },
+    { x: -0.34, y: -0.16, rot: -0.25 },
+    { x: -0.3, y: -0.3, rot: -0.65 },
+    { x: -0.16, y: -0.44, rot: -1.05 },
+    { x: 0.12, y: -0.46, rot: 1.3 },
+    { x: 0.38, y: 0.28, rot: -0.7 },
+    { x: -0.36, y: 0.28, rot: 0.65 },
+  ]
+  for (const seed of seeds) {
+    const [sx, sy] = toCanvas(bounds, seed.x, seed.y, size)
+    paintSeed(ctx, sx, sy, unit * 0.032, unit * 0.018, seed.rot, '#f6d15a', '#a67a12')
+  }
 }
 
 export function paintSepal(ctx, size, bounds) {
-  const gradient = ctx.createLinearGradient(0, size, 0, 0)
-  gradient.addColorStop(0, '#3d9a46')
+  const gradient = ctx.createRadialGradient(size * 0.5, size * 0.45, size * 0.02, size * 0.5, size * 0.5, size * 0.55)
+  gradient.addColorStop(0, '#e7f6b4')
   gradient.addColorStop(0.45, '#8ed25a')
-  gradient.addColorStop(1, '#e7f6b4')
+  gradient.addColorStop(1, '#2e8a3e')
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, size, size)
 
-  const [bx, by] = toCanvas(bounds, 0, 0.02, size)
+  const [bx, by] = toCanvas(bounds, 0, 0, size)
   ctx.strokeStyle = 'rgba(236, 248, 196, 0.85)'
-  ctx.lineWidth = size * 0.012
+  ctx.lineWidth = size * 0.018
   ctx.lineCap = 'round'
   const leaves = 5
-  const spread = Math.PI * 0.92
-  const start = Math.PI / 2 - spread / 2
   for (let i = 0; i < leaves; i += 1) {
-    const angle = start + (i / (leaves - 1)) * spread
-    const [tx, ty] = toCanvas(bounds, Math.cos(angle) * 0.3, Math.sin(angle) * 0.3, size)
+    const angle = Math.PI / 2 + (i * Math.PI * 2) / leaves
+    const [tx, ty] = toCanvas(bounds, Math.cos(angle) * 0.24, Math.sin(angle) * 0.24, size)
     ctx.beginPath()
     ctx.moveTo(bx, by)
     ctx.lineTo(tx, ty)
@@ -179,29 +207,29 @@ export function paintSepal(ctx, size, bounds) {
 export function paintPear(ctx, size, bounds) {
   ctx.fillStyle = '#b5c93a'
   ctx.fillRect(0, 0, size, size)
-  fillInset(ctx, pearShape(), bounds, size, 0.075, '#f6f0d0')
+  fillInset(ctx, pearShape(), bounds, size, 0.07, '#f6f0d0')
 
-  const [ox, oy] = toCanvas(bounds, 0, -0.12, size)
+  const [ox, oy] = toCanvas(bounds, 0, -0.34, size)
   ctx.save()
   ctx.translate(ox, oy)
-  const core = ctx.createRadialGradient(0, 0, size * 0.01, 0, 0, size * 0.16)
-  core.addColorStop(0, '#fffdf6')
-  core.addColorStop(0.7, '#fff8e6')
-  core.addColorStop(1, 'rgba(255, 248, 230, 0)')
+  const core = ctx.createRadialGradient(0, 0, size * 0.01, 0, 0, size * 0.12)
+  core.addColorStop(0, '#f6f0d0')
+  core.addColorStop(1, 'rgba(246, 240, 208, 0)')
   ctx.fillStyle = core
   ctx.beginPath()
-  ctx.ellipse(0, 0, size * 0.075, size * 0.15, 0, 0, Math.PI * 2)
+  ctx.ellipse(0, 0, size * 0.05, size * 0.09, 0, 0, Math.PI * 2)
   ctx.fill()
   ctx.restore()
 
   const seeds = [
-    { x: -0.05, y: -0.02, rot: -0.45 },
-    { x: 0.045, y: -0.14, rot: 0.4 },
-    { x: -0.01, y: -0.26, rot: 0.08 },
+    { x: -0.08, y: -0.22, rot: -0.5 },
+    { x: 0.07, y: -0.38, rot: 0.42 },
+    { x: -0.02, y: -0.5, rot: 0.05 },
   ]
   for (const seed of seeds) {
     const [sx, sy] = toCanvas(bounds, seed.x, seed.y, size)
-    paintTeardrop(ctx, sx, sy, size * 0.042, size * 0.016, -seed.rot, '#6a3a1c')
+    paintTeardrop(ctx, sx, sy, size * 0.078, size * 0.03, -seed.rot, '#3d2412')
+    paintTeardrop(ctx, sx, sy, size * 0.062, size * 0.022, -seed.rot, '#6a3a1c')
   }
 }
 

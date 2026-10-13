@@ -1,10 +1,16 @@
-export default function Lights() {
+export default function Lights({ theme = 'light' }) {
+  const dark = theme === 'dark'
+
   return (
     <>
-      <hemisphereLight args={['#ffffff', '#d5d6db', 0.46]} />
-      <ambientLight intensity={0.14} color="#f7f7f8" />
-      <directionalLight position={[1.4, 14, 2.2]} intensity={2.15} color="#ffffff" />
-      <directionalLight position={[-6, 8, -3]} intensity={0.28} color="#f3f4f8" />
+      <hemisphereLight
+        color="#ffffff"
+        groundColor={dark ? '#3a3a40' : '#d5d6db'}
+        intensity={dark ? 0.62 : 0.46}
+      />
+      <ambientLight intensity={dark ? 0.22 : 0.14} color={dark ? '#f4f4f6' : '#f7f7f8'} />
+      <directionalLight position={[1.4, 14, 2.2]} intensity={dark ? 2.4 : 2.15} color="#ffffff" />
+      <directionalLight position={[-6, 8, -3]} intensity={dark ? 0.4 : 0.28} color={dark ? '#f7f7f8' : '#f3f4f8'} />
     </>
   )
 }

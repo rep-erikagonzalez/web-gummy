@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 
-export const STRAWBERRY_CROWN = { x: 0, y: 0.84 }
+export const STRAWBERRY_CROWN = { x: 0, y: 0.52 }
 
 export const PEAR_STEM = { x: 0, y: 0.74 }
 
@@ -33,13 +33,14 @@ function roundedStar(spikes, outer, inner, tipRound, valleyRound) {
 
 export function strawberryShape() {
   const shape = new THREE.Shape()
-  shape.moveTo(0, -1)
-  shape.bezierCurveTo(0.52, -0.8, 0.98, -0.2, 0.86, 0.28)
-  shape.bezierCurveTo(0.76, 0.64, 0.4, 0.92, 0.18, 0.7)
-  shape.bezierCurveTo(0.1, 0.58, 0.04, 0.5, 0, 0.46)
-  shape.bezierCurveTo(-0.04, 0.5, -0.1, 0.58, -0.18, 0.7)
-  shape.bezierCurveTo(-0.4, 0.92, -0.76, 0.64, -0.86, 0.28)
-  shape.bezierCurveTo(-0.98, -0.2, -0.52, -0.8, 0, -1)
+  shape.moveTo(-0.22, 0.52)
+  shape.lineTo(0.22, 0.52)
+  shape.bezierCurveTo(0.44, 0.52, 0.5, 0.36, 0.5, 0.2)
+  shape.bezierCurveTo(0.48, -0.02, 0.34, -0.28, 0.18, -0.46)
+  shape.bezierCurveTo(0.12, -0.56, 0.06, -0.63, 0, -0.63)
+  shape.bezierCurveTo(-0.06, -0.63, -0.12, -0.56, -0.18, -0.46)
+  shape.bezierCurveTo(-0.34, -0.28, -0.48, -0.02, -0.5, 0.2)
+  shape.bezierCurveTo(-0.5, 0.36, -0.44, 0.52, -0.22, 0.52)
   shape.closePath()
   return shape
 }
@@ -47,27 +48,26 @@ export function strawberryShape() {
 export function sepalShape() {
   const shape = new THREE.Shape()
   const leaves = 5
-  const spread = Math.PI * 0.92
-  const start = Math.PI / 2 - spread / 2
-  const outer = 0.38
-  const shoulder = 0.15
-
-  shape.moveTo(-0.05, 0)
+  const outer = 0.3
+  const inner = 0.07
+  const start = Math.PI / 2
+  const at = (angle, radius) => [Math.cos(angle) * radius, Math.sin(angle) * radius]
+  const [sx, sy] = at(start - 0.46, 0.14)
+  shape.moveTo(sx, sy)
   for (let i = 0; i < leaves; i += 1) {
-    const angle = start + (i / (leaves - 1)) * spread
-    const left = angle - 0.2
-    const right = angle + 0.2
-    const tipX = Math.cos(angle) * outer
-    const tipY = Math.sin(angle) * outer
-    if (i === 0) {
-      shape.quadraticCurveTo(Math.cos(angle) * 0.08, Math.sin(angle) * 0.08, Math.cos(left) * shoulder, Math.sin(left) * shoulder)
-    } else {
-      const valley = start + ((i - 0.5) / (leaves - 1)) * spread
-      shape.quadraticCurveTo(Math.cos(valley) * 0.07, Math.sin(valley) * 0.07, Math.cos(left) * shoulder, Math.sin(left) * shoulder)
-    }
-    shape.quadraticCurveTo(tipX, tipY, Math.cos(right) * shoulder, Math.sin(right) * shoulder)
+    const angle = start + (i * Math.PI * 2) / leaves
+    const next = angle + (Math.PI * 2) / leaves
+    const valley = (angle + next) / 2
+    const [c1x, c1y] = at(angle - 0.22, outer * 0.86)
+    const [tx, ty] = at(angle, outer)
+    const [c2x, c2y] = at(angle + 0.22, outer * 0.86)
+    const [rx, ry] = at(angle + 0.46, 0.14)
+    const [vx, vy] = at(valley, inner)
+    const [nx, ny] = at(next - 0.46, 0.14)
+    shape.quadraticCurveTo(c1x, c1y, tx, ty)
+    shape.quadraticCurveTo(c2x, c2y, rx, ry)
+    shape.quadraticCurveTo(vx, vy, nx, ny)
   }
-  shape.quadraticCurveTo(0.08, 0.06, 0.05, 0)
   shape.closePath()
   return shape
 }

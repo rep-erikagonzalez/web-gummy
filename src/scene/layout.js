@@ -86,7 +86,7 @@ export function frameOf(width, height) {
   const fov = narrow ? 32 : 28
   const shiftX = narrow ? 0 : halfW * 0.46
   const short = narrow && height < 520
-  const shiftZ = narrow ? (short ? halfD * 0.12 : 0) : -halfD * 0.2
+  const shiftZ = narrow ? (short ? halfD * 0.12 : 0) : halfD * 0.04
   const lookX = clusterX - shiftX
   const lookZ = clusterZ - shiftZ
   const needHalfW = Math.abs(clusterX - lookX) + halfW + 0.35

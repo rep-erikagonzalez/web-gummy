@@ -37,6 +37,26 @@ function StudioEnvironment() {
   )
 }
 
+function Exposure({ theme }) {
+  const gl = useThree((state) => state.gl)
+
+  useLayoutEffect(() => {
+    gl.toneMappingExposure = theme === 'dark' ? 1.12 : 1.05
+  }, [gl, theme])
+
+  return null
+}
+
+function EnvIntensity({ value }) {
+  const scene = useThree((state) => state.scene)
+
+  useLayoutEffect(() => {
+    scene.environmentIntensity = value
+  }, [scene, value])
+
+  return null
+}
+
 function Reveal({ onReady }) {
   const scene = useThree((state) => state.scene)
   const notified = useRef(false)
@@ -53,7 +73,7 @@ function Reveal({ onReady }) {
   return null
 }
 
-export default function Scene({ category = null, resetToken = 0 }) {
+export default function Scene({ category = null, resetToken = 0, theme = 'light' }) {
   const [ready, setReady] = useState(false)
 
   return (
@@ -71,17 +91,20 @@ export default function Scene({ category = null, resetToken = 0 }) {
         }}
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping
-          gl.toneMappingExposure = 1.05
+          gl.toneMappingExposure = theme === 'dark' ? 1.12 : 1.05
           gl.setClearColor(0x000000, 0)
+          gl.domElement.setAttribute('aria-label', 'Gominolas de fruta que puedes arrastrar')
           gl.domElement.addEventListener('webglcontextlost', (event) => {
             event.preventDefault()
           })
         }}
       >
         <ResponsiveCamera />
-        <Lights />
+        <Exposure theme={theme} />
+        <Lights theme={theme} />
         <Suspense fallback={null}>
           <StudioEnvironment />
+          <EnvIntensity value={theme === 'dark' ? 0.34 : 0.22} />
           <Reveal onReady={() => setReady(true)} />
         </Suspense>
         <Grove category={category} resetToken={resetToken} />

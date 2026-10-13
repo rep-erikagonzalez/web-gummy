@@ -1,19 +1,112 @@
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #ececee;
+  --bg-alt: #f7f5f2;
+  --ink: #111111;
+  --text: #242428;
+  --muted: #5a5a5f;
+  --card: #ffffff;
+  --card-border: rgba(17, 17, 17, 0.1);
+  --shadow: 0 14px 40px rgba(17, 17, 17, 0.08);
+  --pill-bg: rgba(255, 255, 255, 0.86);
+  --pill-text: #141416;
+  --pill-border: rgba(17, 17, 17, 0.14);
+  --button: #111111;
+  --button-text: #ffffff;
+  --button-secondary-bg: #ffffff;
+  --button-secondary-text: #111111;
+  --header-bg: rgba(236, 236, 238, 0.78);
+  --focus: #111111;
+  --fruit-berry: #e2324a;
+  --fruit-pear: #b5c93a;
+  --fruit-bloom: #f49aa8;
+  --fruit-star: #f4d03f;
+  --fruit-leaf: #2e8a3e;
+  --fruit-flesh: #f7c9d2;
+  --fruit-cream: #f6f0d0;
+  --fruit-core: #fff6f4;
+  --fruit-seed: #f6d15a;
+  --fruit-pit: #6a3a1c;
+  --hero-glow: radial-gradient(ellipse 88% 72% at 62% 44%, #f7f7f8 0%, #ececee 54%, #e4e5e8 100%);
+  --header-h: 4.6rem;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #141416;
+  --bg-alt: #1c1c1f;
+  --ink: #ffffff;
+  --text: #f2f2f2;
+  --muted: #c4c4c8;
+  --card: #232327;
+  --card-border: rgba(255, 255, 255, 0.12);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  --pill-bg: rgba(35, 35, 39, 0.88);
+  --pill-text: #f2f2f2;
+  --pill-border: rgba(255, 255, 255, 0.16);
+  --button: #f2f2f2;
+  --button-text: #141416;
+  --button-secondary-bg: #232327;
+  --button-secondary-text: #f2f2f2;
+  --header-bg: rgba(20, 20, 22, 0.78);
+  --focus: #f2f2f2;
+  --fruit-berry: #ff5d74;
+  --fruit-pear: #cbe25a;
+  --fruit-bloom: #ffb4c2;
+  --fruit-star: #ffe56a;
+  --fruit-leaf: #5dbe6e;
+  --fruit-flesh: #ffd5dc;
+  --fruit-cream: #fff6d8;
+  --fruit-core: #fffaf6;
+  --fruit-seed: #ffe07a;
+  --fruit-pit: #c48958;
+  --hero-glow: radial-gradient(ellipse 88% 72% at 62% 44%, #1e1e22 0%, #141416 56%, #101012 100%);
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-h) + 0.75rem);
+}
+
 html,
 body,
 #root {
   margin: 0;
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
-  overflow: hidden;
-  font-family: 'Inter Tight', 'Segoe UI', sans-serif;
-  background: #ececee;
-  color: #141414;
+  overflow-x: hidden;
+  font-family: Inter, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
