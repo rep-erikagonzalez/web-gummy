@@ -1,54 +1,60 @@
+import { useRef } from 'react'
+import { Physics } from '@react-three/rapier'
 import { useThree } from '@react-three/fiber'
-import Blossom from '../components/jellies/Blossom'
-import Pear from '../components/jellies/Pear'
-import Starfruit from '../components/jellies/Starfruit'
-import Strawberry from '../components/jellies/Strawberry'
-import Draggable from './Draggable'
+import Arena from './Arena'
+import Candy from './Candy'
 import { PLACEMENTS, isNarrow } from './layout'
 
-const PIECE_SCALE = 0.87
-
-const PIECES = [
-  { id: 'strawberry-a', category: 'berry', Component: Strawberry },
-  { id: 'strawberry-b', category: 'berry', Component: Strawberry },
-  { id: 'pear-a', category: 'orchard', Component: Pear },
-  { id: 'pear-b', category: 'orchard', Component: Pear },
-  { id: 'starfruit', category: 'tropic', Component: Starfruit },
-  { id: 'bloom-a', category: 'bloom', Component: Blossom },
-  { id: 'bloom-b', category: 'bloom', Component: Blossom },
-  { id: 'bloom-c', category: 'bloom', Component: Blossom },
+const INITIAL = [
+  { id: 'strawberry-a', kind: 'berry' },
+  { id: 'strawberry-b', kind: 'berry' },
+  { id: 'pear-a', kind: 'orchard' },
+  { id: 'pear-b', kind: 'orchard' },
+  { id: 'starfruit', kind: 'tropic' },
+  { id: 'bloom-a', kind: 'bloom' },
+  { id: 'bloom-b', kind: 'bloom' },
+  { id: 'bloom-c', kind: 'bloom' },
 ]
 
-export default function Grove({ category, resetToken }) {
+export default function Grove({ drops = [], feel = 'soft', shakeToken = 0, resetToken = 0, paused = false, onGone }) {
   const width = useThree((state) => state.size.width)
   const narrow = isNarrow(width)
-  const filterKey = category ?? 'all'
+  const boundsRef = useRef(null)
 
   return (
-    <group>
-      {PIECES.map((piece, index) => {
+    <Physics gravity={[0, -22, 0]} timeStep={1 / 60} paused={paused} numSolverIterations={4}>
+      <Arena boundsRef={boundsRef} />
+      {INITIAL.map((piece) => {
         const placement = PLACEMENTS[piece.id]
-        const home = narrow ? placement.narrow : placement.wide
-        const Piece = piece.Component
-        const shown = category == null || category === piece.category
         return (
-          <Draggable
-            key={piece.id}
-            homeX={home[0]}
-            homeZ={home[1]}
+          <Candy
+            key={`${piece.id}-${narrow ? 'narrow' : 'wide'}`}
+            id={piece.id}
+            kind={piece.kind}
+            home={narrow ? placement.narrow : placement.wide}
             rotation={placement.rotation}
-            shadow={placement.shadow}
-            visible={shown}
-            filterKey={filterKey}
+            feel={feel}
+            shakeToken={shakeToken}
             resetToken={resetToken}
-            index={index}
-          >
-            <group scale={PIECE_SCALE}>
-              <Piece />
-            </group>
-          </Draggable>
+            boundsRef={boundsRef}
+          />
         )
       })}
-    </group>
+      {drops.map((drop) => (
+        <Candy
+          key={drop.id}
+          id={drop.id}
+          kind={drop.category}
+          rotation={(drop.id.length % 7) * 0.2 - 0.6}
+          feel={feel}
+          shakeToken={shakeToken}
+          resetToken={resetToken}
+          spawn
+          phase={drop.phase}
+          boundsRef={boundsRef}
+          onGone={onGone}
+        />
+      ))}
+    </Physics>
   )
 }

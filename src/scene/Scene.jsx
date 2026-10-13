@@ -1,4 +1,4 @@
-import { Suspense, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import * as THREE from 'three'
@@ -73,15 +73,40 @@ function Reveal({ onReady }) {
   return null
 }
 
-export default function Scene({ category = null, resetToken = 0, theme = 'light' }) {
+function AdaptiveQuality() {
+  const regress = useThree((state) => state.performance.regress)
+  useFrame((_, delta) => {
+    if (delta > 0.02 && delta < 0.1) regress()
+  })
+  return null
+}
+
+export default function Scene({
+  drops = [],
+  feel = 'soft',
+  shakeToken = 0,
+  resetToken = 0,
+  paused = false,
+  onGone,
+  theme = 'light',
+}) {
   const [ready, setReady] = useState(false)
+  const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 820px)').matches)
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 820px)')
+    const sync = () => setNarrow(media.matches)
+    media.addEventListener('change', sync)
+    return () => media.removeEventListener('change', sync)
+  }, [])
 
   return (
     <div className="scene">
       {ready ? null : <div className="scene-pending" aria-hidden="true" />}
       <Canvas
         className={ready ? 'scene-ready' : 'scene-waiting'}
-        dpr={[1, 1.75]}
+        dpr={narrow ? [1, 1] : [1, 1.5]}
+        performance={{ min: 0.5, debounce: 300 }}
         camera={{ position: [0.2, 12, 1.8], fov: 28, near: 0.1, far: 90 }}
         gl={{
           antialias: true,
@@ -100,14 +125,22 @@ export default function Scene({ category = null, resetToken = 0, theme = 'light'
         }}
       >
         <ResponsiveCamera />
+        <AdaptiveQuality />
         <Exposure theme={theme} />
         <Lights theme={theme} />
         <Suspense fallback={null}>
           <StudioEnvironment />
           <EnvIntensity value={theme === 'dark' ? 0.34 : 0.22} />
           <Reveal onReady={() => setReady(true)} />
+          <Grove
+            drops={drops}
+            feel={feel}
+            shakeToken={shakeToken}
+            resetToken={resetToken}
+            paused={paused}
+            onGone={onGone}
+          />
         </Suspense>
-        <Grove category={category} resetToken={resetToken} />
       </Canvas>
     </div>
   )
