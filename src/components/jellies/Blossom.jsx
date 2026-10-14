@@ -6,6 +6,8 @@ const slice = createSlice(blossomShape(), paintBlossom, '#c13d6c', {
   extrude: { bevelSize: 0.045, curveSegments: 6 },
 })
 
+export const blossomParts = { body: slice, extrude: { bevelSize: 0.045, curveSegments: 6 } }
+
 export default function Blossom() {
   return <mesh geometry={slice.geometry} material={slice.materials} rotation={FLAT_ROTATION} />
 }

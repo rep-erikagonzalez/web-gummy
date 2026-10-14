@@ -11,11 +11,17 @@ function groundAt(camera, ndcX, ndcY, target) {
   origin.copy(camera.position)
   scratch.set(ndcX, ndcY, 0.5).unproject(camera)
   direction.copy(scratch).sub(origin)
-  const distance = direction.y === 0 ? 0 : -origin.y / direction.y
+  if (direction.y >= -0.02) {
+    direction.y = 0
+    if (direction.lengthSq() < 1e-6) direction.set(0, 0, -1)
+    direction.normalize()
+    return target.copy(origin).addScaledVector(direction, 14).setY(0)
+  }
+  const distance = -origin.y / direction.y
   return target.set(origin.x + direction.x * distance, 0, origin.z + direction.z * distance)
 }
 
-export default function Arena({ boundsRef }) {
+export default function Arena({ boundsRef, poseEpoch = 0 }) {
   const camera = useThree((state) => state.camera)
   const size = useThree((state) => state.size)
   const [box, setBox] = useState(null)
@@ -38,7 +44,7 @@ export default function Arena({ boundsRef }) {
     if (next.maxX - next.minX < 1 || next.maxZ - next.minZ < 1) return
     boundsRef.current = next
     setBox(next)
-  }, [boundsRef, camera, size])
+  }, [boundsRef, camera, poseEpoch, size])
 
   if (!box) return null
 

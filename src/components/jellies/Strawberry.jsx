@@ -19,6 +19,8 @@ const crown = createSlice(sepalShape(), paintSepal, '#2e8a3e', {
 
 const lift = sliceHeight() - 0.018
 
+export const berryParts = { body, crown, lift }
+
 export default function Strawberry() {
   return (
     <group>

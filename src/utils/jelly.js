@@ -21,7 +21,7 @@ export function sliceHeight(extrude = SLICE) {
   return depth + (enabled ? bevel : 0)
 }
 
-function smoothNormals(geometry) {
+export function smoothNormals(geometry) {
   const position = geometry.attributes.position
   const normal = geometry.attributes.normal
   const buckets = new Map()
@@ -133,5 +133,5 @@ export function createSlice(shape, paint, skinColor, options = {}) {
     polygonOffsetUnits: -2,
   })
 
-  return { geometry, materials: [face, skin] }
+  return { geometry, materials: [face, skin], bounds }
 }

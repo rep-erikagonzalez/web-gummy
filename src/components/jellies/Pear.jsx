@@ -35,6 +35,8 @@ const leaf = createSlice(pearLeafShape(), paintLeaf, '#3f8f34', {
 
 const lift = sliceHeight() - 0.016
 
+export const pearParts = { body, stem, leaf, lift }
+
 export default function Pear() {
   return (
     <group>

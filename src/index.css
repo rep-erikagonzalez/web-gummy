@@ -30,6 +30,7 @@
   --fruit-pit: #6a3a1c;
   --hero-glow: radial-gradient(ellipse 88% 72% at 62% 44%, #f7f7f8 0%, #ececee 54%, #e4e5e8 100%);
   --header-h: 4.6rem;
+  --gutter: 48px;
 }
 
 [data-theme='dark'] {

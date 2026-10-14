@@ -89,9 +89,18 @@ export default function Scene({
   paused = false,
   onGone,
   theme = 'light',
+  scaleMode = false,
+  showTags = false,
+  angled = false,
+  knifeMode = false,
+  fragments = [],
+  severed,
+  onCut,
+  onFragmentGone,
 }) {
   const [ready, setReady] = useState(false)
   const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 820px)').matches)
+  const [poseEpoch, setPoseEpoch] = useState(0)
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 820px)')
@@ -124,7 +133,7 @@ export default function Scene({
           })
         }}
       >
-        <ResponsiveCamera />
+        <ResponsiveCamera angled={angled} onSettled={() => setPoseEpoch((value) => value + 1)} />
         <AdaptiveQuality />
         <Exposure theme={theme} />
         <Lights theme={theme} />
@@ -139,6 +148,14 @@ export default function Scene({
             resetToken={resetToken}
             paused={paused}
             onGone={onGone}
+            scaleMode={scaleMode}
+            showTags={showTags}
+            poseEpoch={poseEpoch}
+            knifeMode={knifeMode}
+            fragments={fragments}
+            severed={severed}
+            onCut={onCut}
+            onFragmentGone={onFragmentGone}
           />
         </Suspense>
       </Canvas>
