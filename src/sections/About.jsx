@@ -62,6 +62,22 @@ export default function About() {
             </ol>
           </div>
 
+          <div className="about-courses" id="cursos">
+            <h3 className="subsection-title">{about.coursesTitle}</h3>
+            <ul className="course-list">
+              {about.courses.map((item) => (
+                <li key={item.title}>
+                  <span className={`dot dot-${item.tone}`} aria-hidden="true" />
+                  <div>
+                    <h4>{item.title}</h4>
+                    <p>{item.meta}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <p className="course-note">{about.coursesNote}</p>
+          </div>
+
           <div className="belief" id="tecnologia">
             <h3 className="subsection-title">{about.beliefTitle}</h3>
             <p className="belief-line">{about.beliefLine}</p>

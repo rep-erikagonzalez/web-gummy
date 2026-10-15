@@ -19,7 +19,8 @@ export default function SectionDecor({ items }) {
     const update = () => {
       const rect = node.getBoundingClientRect()
       const delta = rect.top + rect.height * 0.5 - window.innerHeight * 0.5
-      node.style.setProperty('--parallax', `${(-delta * 0.06).toFixed(2)}px`)
+      const shift = Math.max(-12, Math.min(12, -delta * 0.035))
+      node.style.setProperty('--parallax', `${shift.toFixed(2)}px`)
     }
     const onScroll = () => {
       cancelAnimationFrame(frame)

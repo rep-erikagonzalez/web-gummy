@@ -330,20 +330,78 @@
 .fav-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.7rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.fav-row li {
-  padding: 0.32rem 0.7rem;
+.fav-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3.1rem;
+  padding: 0.35rem 0.9rem 0.35rem 0.4rem;
   border: 1px solid var(--pill-border);
   border-radius: 999px;
   background: var(--pill-bg);
   color: var(--pill-text);
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-family: 'Inter Tight', Inter, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fav-mark {
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: none;
+  animation: fav-bob 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 6px 8px rgba(17, 17, 17, 0.16));
+}
+
+.fav-row li:nth-child(2) .fav-mark { animation-delay: -0.7s; }
+.fav-row li:nth-child(3) .fav-mark { animation-delay: -1.4s; }
+.fav-row li:nth-child(4) .fav-mark { animation-delay: -2.1s; }
+
+.fav-pill:hover .fav-mark,
+.fav-pill.is-pop .fav-mark {
+  animation: jelly-wobble 0.48s ease;
+}
+
+.fav-hearts {
+  position: absolute;
+  left: 1.35rem;
+  top: 0.15rem;
+  width: 0;
+  height: 0;
+}
+
+.fav-heart {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1.7rem;
+  height: 1.55rem;
+  overflow: visible;
+  fill: #e23b57;
+  filter: drop-shadow(0 4px 0 color-mix(in srgb, #e23b57 35%, white));
+  animation: heart-pop 1.25s cubic-bezier(0.22, 1.4, 0.36, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes fav-bob {
+  0%,
+  100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes heart-pop {
+  0% { opacity: 0; transform: translate(-40%, 8px) scale(0.25) rotate(-14deg); }
+  18% { opacity: 1; transform: translate(calc(-40% + var(--hx, 0px)), -30px) scale(1.28) rotate(8deg); }
+  62% { opacity: 1; transform: translate(calc(-40% + var(--hx, 0px)), -40px) scale(1.05) rotate(-4deg); }
+  100% { opacity: 0; transform: translate(calc(-40% + var(--hx, 0px)), -64px) scale(0.8) rotate(6deg); }
 }
 
 .talk-title {
@@ -766,5 +824,17 @@
 
   .ai-inner {
     transition: none;
+  }
+
+  .fav-mark,
+  .fav-pill:hover .fav-mark,
+  .fav-pill.is-pop .fav-mark,
+  .fav-heart {
+    animation: none;
+  }
+
+  .fav-heart {
+    opacity: 1;
+    transform: translate(-40%, -16px) scale(1);
   }
 }

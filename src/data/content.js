@@ -16,10 +16,9 @@ export const nav = [
 
 export const stats = [
   { id: 'systems', fruit: 'berry', tone: 'berry', mark: 'Ing.', label: 'Ingeniería de Sistemas' },
-  { id: 'masters', fruit: 'pear', tone: 'pear', mark: 'MSc', label: 'Maestría en dirección de TI' },
+  { id: 'masters', fruit: 'pear', tone: 'pear', mark: 'Posgrado', label: 'Maestría en dirección de TI' },
   { id: 'people', fruit: 'bloom', tone: 'bloom', value: 100, prefix: '+', label: 'personas certificadas' },
   { id: 'years', fruit: 'star', tone: 'star', value: 9, prefix: '+', label: 'años de experiencia' },
-  { id: 'courses', fruit: 'berry', tone: 'berry', value: 4, label: 'cursos de formación digital' },
 ]
 
 export const about = {
@@ -48,10 +47,39 @@ export const about = {
       tone: 'bloom',
     },
     {
-      title: 'Bachillerato Técnico en Programación Informática',
-      place: 'Colegio Ciudad Cuba / SENA',
+      title: 'Bachillerato Técnico en Programación de software',
+      place: 'SENA',
       when: '2013',
       tone: 'star',
+    },
+  ],
+  coursesTitle: 'Cursos',
+  coursesNote: 'Un curso termina. Al día siguiente sale otra cosa.',
+  courses: [
+    {
+      title: 'Ciberseguridad de Google',
+      meta: '2025 · Certificado profesional · Google',
+      tone: 'berry',
+    },
+    {
+      title: 'Google AI Essentials',
+      meta: '2025 · Curso · Google',
+      tone: 'pear',
+    },
+    {
+      title: 'Diplomado en Diseño de la Interacción UI-UX',
+      meta: '2025 · Universidad del Quindío',
+      tone: 'bloom',
+    },
+    {
+      title: 'Diplomado en Diseño UX/UI-2',
+      meta: '2024 · Universidad nacional de Colombia',
+      tone: 'star',
+    },
+    {
+      title: 'Diplomado en docencia y didáctica universitaria',
+      meta: '2023 · Politécnico superior',
+      tone: 'berry',
     },
   ],
   beliefTitle: 'Cómo veo la tecnología',
@@ -116,23 +144,23 @@ export const projects = {
       tone: 'berry',
       tags: ['publico'],
       problem:
-        'En la alcaldía, los documentos y trámites circulaban en papel y por correo, y era difícil saber en qué estado estaba cada uno.',
-      did: 'Desarrollo y mantenimiento de una plataforma web de gestión documental: radicación, flujos de aprobación, consulta y archivo digital.',
+        'En las entidades públicas, los documentos y trámites circulaban en papel y por correo, y era difícil saber en qué estado estaba cada uno.',
+      did: 'Desarrollo y mantenimiento de Intraweb, una marca registrada: plataforma web de gestión documental para cualquier entidad pública, con radicación, flujos de aprobación, consulta y archivo digital.',
       tech: ['PHP', 'Laravel', 'Vue.js', 'Linux'],
-      result: 'Hoy la usan la alcaldía y otras entidades públicas del Quindío en su trabajo diario.',
+      result: 'Hoy la usa cualquier entidad pública en su trabajo diario.',
       link: '',
     },
     {
       id: 'epa',
-      name: 'Mantenimientos EPA',
+      name: 'Trámites y servicios en general',
       category: 'Sector público',
       fruit: 'pear',
       tone: 'pear',
       tags: ['publico'],
-      problem: 'La programación y el registro de mantenimientos dependían de hojas de cálculo y reportes manuales.',
-      did: 'Sistema para programar, registrar y consultar mantenimientos, con una app móvil para que el personal en campo reporte desde el sitio.',
+      problem: 'La ciudadanía necesitaba trámites y servicios más claros para gestionarlos.',
+      did: 'He desarrollado una gran cantidad de trámites y servicios para la ciudadanía.',
       tech: ['Laravel', 'Ionic', 'JavaScript', 'AWS'],
-      result: 'Seguimiento centralizado y un historial consultable de cada mantenimiento.',
+      result: 'Esos trámites y servicios ya están disponibles para la ciudadanía.',
       link: '',
     },
     {
@@ -170,7 +198,7 @@ export const projects = {
       tags: ['formacion'],
       problem: 'Muchas personas querían usar mejor la tecnología en su trabajo, pero no sabían por dónde empezar.',
       did: 'Diseñé e impartí 4 cursos de formación digital, prácticos y pensados para aplicar desde el primer día.',
-      tech: ['Herramientas digitales', 'IA aplicada', 'WordPress'],
+      tech: ['Herramientas digitales', 'IA aplicada', 'Servicios de Google'],
       result: 'Más de 100 personas certificadas.',
       link: '',
     },
@@ -191,7 +219,12 @@ export const ecosystem = {
     'No es una empresa. Es un experimento que crece conmigo: una IA para cada tarea, conectadas entre sí.',
   logTitle: 'Bitácora del experimento',
   favoritesTitle: 'Mis IAs favoritas',
-  favorites: ['Cursor', 'Claude', 'Gemini', 'Grok'],
+  favorites: [
+    { id: 'cursor', name: 'Cursor' },
+    { id: 'claude', name: 'Claude' },
+    { id: 'gemini', name: 'Gemini' },
+    { id: 'grok', name: 'Grok' },
+  ],
   assistants: [
     {
       id: 'agenda',
@@ -286,6 +319,7 @@ export const footer = {
       links: [
         { href: '#sobre-mi', label: 'Sobre mí' },
         { href: '#formacion', label: 'Formación' },
+        { href: '#cursos', label: 'Cursos' },
         { href: '#tecnologia', label: 'Cómo veo la tecnología' },
       ],
     },

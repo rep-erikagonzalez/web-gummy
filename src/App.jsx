@@ -6,7 +6,6 @@ import Footer from './sections/Footer'
 import Hero from './sections/Hero'
 import Projects from './sections/Projects'
 import Services from './sections/Services'
-import Stats from './sections/Stats'
 import Tools from './sections/Tools'
 import { useTheme } from './theme/useTheme'
 import './App.css'
@@ -24,7 +23,6 @@ export default function App() {
       <Header theme={theme} onToggleTheme={toggleTheme} />
       <main id="contenido">
         <Hero theme={theme} />
-        <Stats />
         <About />
         <Services />
         <Projects />
