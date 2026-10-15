@@ -6,6 +6,7 @@ import Footer from './sections/Footer'
 import Hero from './sections/Hero'
 import Projects from './sections/Projects'
 import Services from './sections/Services'
+import Thoughts from './sections/Thoughts'
 import Tools from './sections/Tools'
 import { useTheme } from './theme/useTheme'
 import './App.css'
@@ -28,6 +29,7 @@ export default function App() {
         <Projects />
         <Tools />
         <Ecosystem />
+        <Thoughts />
         <Contact />
       </main>
       <Footer />

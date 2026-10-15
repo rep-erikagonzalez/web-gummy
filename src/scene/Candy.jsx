@@ -320,7 +320,7 @@ function Candy({
     rigid.setAngvel({ x: slice.angvel[0], y: slice.angvel[1], z: slice.angvel[2] }, true)
     rigid.applyImpulse({ x: slice.impulse[0], y: slice.impulse[1], z: slice.impulse[2] }, true)
     juiceV.current = 3.6
-    if (feelRef.current === 'soft') squashV.current = 4.2
+    if (feelRef.current === 'soft') squashV.current = 1.5
     return undefined
   }, [slice])
 
@@ -345,7 +345,7 @@ function Candy({
     const scale = speed > limit ? limit / speed : 1
     rigid.setLinvel({ x: velocity.x * scale, y: velocity.y * scale, z: velocity.z * scale }, true)
     rigid.wakeUp()
-    if (feelRef.current === 'soft') squashV.current = 3.2
+    if (feelRef.current === 'soft') squashV.current = 1.15
     glRef.current.domElement.style.cursor = hovered.current ? 'grab' : 'auto'
   }
 
@@ -566,7 +566,7 @@ function Candy({
     popV.current = nextPopV
 
     const soft = feelRef.current === 'soft'
-    const [nextSquash, nextSquashV] = spring(squash.current, squashV.current, 0, step, soft ? 310 : 420, soft ? 6.4 : 9)
+    const [nextSquash, nextSquashV] = spring(squash.current, squashV.current, 0, step, soft ? 280 : 420, soft ? 13 : 9)
     squash.current = !soft || (Math.abs(nextSquash) < 0.0008 && Math.abs(nextSquashV) < 0.01) ? 0 : nextSquash
     squashV.current = squash.current === 0 ? 0 : nextSquashV
 
@@ -604,7 +604,7 @@ function Candy({
       })
     }
     if (visual.current) {
-      const stretch = soft ? Math.max(-0.34, Math.min(0.34, squash.current)) : 0
+      const stretch = soft ? Math.max(-0.14, Math.min(0.14, squash.current)) : 0
       const jelly = Math.max(-0.2, Math.min(0.24, juice.current))
       const size = (fading ? 1 : show) * bulk.current
       visual.current.scale.set(size * (1 + stretch) * (1 + jelly), size * (1 - jelly * 1.35), size * (1 - stretch) * (1 + jelly))
@@ -672,8 +672,8 @@ function Candy({
           if (!rigid || feelRef.current !== 'soft' || dragging.current) return
           const velocity = rigid.linvel()
           const speed = Math.hypot(velocity.x, velocity.y, velocity.z)
-          if (speed < 1.6) return
-          squashV.current = Math.min(9, 3.4 + speed * 0.55)
+          if (speed < 2.2) return
+          squashV.current = Math.min(2.1, 0.85 + speed * 0.16)
         }}
       >
         <ConvexHullCollider

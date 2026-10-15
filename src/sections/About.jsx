@@ -63,33 +63,23 @@ export default function About() {
           </div>
 
           <div className="about-courses" id="cursos">
-            <h3 className="subsection-title">{about.coursesTitle}</h3>
+            <div className="course-head">
+              <h3 className="subsection-title">{about.coursesTitle}</h3>
+              <span className="course-count">{about.courses.length}</span>
+            </div>
             <ul className="course-list">
-              {about.courses.map((item) => (
-                <li key={item.title}>
-                  <span className={`dot dot-${item.tone}`} aria-hidden="true" />
-                  <div>
+              {about.courses.map((item) => {
+                const [year, ...detail] = item.meta.split(' · ')
+                return (
+                  <li key={item.title} className={`course-card tone-${item.tone}`}>
+                    <span className="course-year">{year}</span>
                     <h4>{item.title}</h4>
-                    <p>{item.meta}</p>
-                  </div>
-                </li>
-              ))}
+                    <p>{detail.join(' · ')}</p>
+                  </li>
+                )
+              })}
             </ul>
             <p className="course-note">{about.coursesNote}</p>
-          </div>
-
-          <div className="belief" id="tecnologia">
-            <h3 className="subsection-title">{about.beliefTitle}</h3>
-            <p className="belief-line">{about.beliefLine}</p>
-            <p className="belief-copy">{about.belief}</p>
-            <ul className="principle-row">
-              {about.principles.map((item) => (
-                <li key={item.label} className="principle">
-                  <span className={`dot dot-${item.tone}`} aria-hidden="true" />
-                  {item.label}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
         </Reveal>

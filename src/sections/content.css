@@ -783,6 +783,222 @@
   }
 }
 
+.think-section {
+  position: relative;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.think-track {
+  display: none;
+  height: calc((var(--steps) + 1) * (100svh - var(--header-h)));
+}
+
+.think-sticky {
+  position: sticky;
+  top: var(--header-h);
+  display: flex;
+  flex-direction: column;
+  height: calc(100svh - var(--header-h));
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.think-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(14rem, 0.75fr);
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
+  min-height: 0;
+  padding: 1.4rem var(--gutter) 1rem;
+}
+
+.think-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.think-intro {
+  max-width: 40rem;
+  margin: 0.45rem 0 0;
+  color: var(--text);
+  font-size: 1.02rem;
+}
+
+.think-index {
+  margin: 1rem 0 0.35rem;
+  color: var(--tone, var(--ink));
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.think-index span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.think-title {
+  margin: 0;
+  max-width: 16ch;
+  color: var(--ink);
+  font-family: 'Archivo Black', 'Arial Black', Impact, sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 3.6rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+}
+
+.think-title span {
+  display: inline;
+}
+
+.think-body {
+  max-width: 38rem;
+  margin: 1rem 0 0;
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.think-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 16rem;
+}
+
+.think-fruit {
+  grid-area: 1 / 1;
+  width: min(22rem, 78%);
+  height: auto;
+}
+
+.think-fruit.is-in {
+  animation: think-drop 0.62s cubic-bezier(0.22, 1.4, 0.36, 1) both, jelly-wobble 0.48s ease 0.62s both;
+}
+
+.think-fruit.is-out {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(22rem, 78%);
+  animation: think-fall 0.62s ease forwards;
+}
+
+@keyframes think-drop {
+  0% { opacity: 0; transform: translateY(-42%) scale(0.7); }
+  62% { opacity: 1; transform: translateY(7%) scale(1.06, 0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes think-fall {
+  from { opacity: 1; transform: translate(-50%, -50%) rotate(0deg); }
+  to { opacity: 0; transform: translate(-50%, 55%) rotate(16deg); }
+}
+
+.think-bar {
+  height: 3px;
+  margin: 0 var(--gutter) 1.15rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.think-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tone, var(--fruit-berry));
+}
+
+.think-stack,
+.think-end {
+  padding-inline: var(--gutter);
+}
+
+.think-stack {
+  padding-top: 3rem;
+}
+
+.think-stack h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: 'Archivo Black', 'Arial Black', Impact, sans-serif;
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+}
+
+.think-card {
+  margin-top: 0.9rem;
+  padding: 1.15rem 1.1rem 1.3rem;
+  border: 1px solid var(--card-border);
+  border-top: 4px solid var(--tone, var(--fruit-berry));
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--tone, var(--fruit-berry)) 10%, var(--card));
+  box-shadow: var(--shadow);
+}
+
+.think-card-fruit {
+  display: block;
+  width: 7.2rem;
+  height: auto;
+  margin-bottom: 0.75rem;
+}
+
+.think-kicker {
+  margin: 0;
+  color: var(--tone, var(--ink));
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.think-card h3 {
+  margin: 0.35rem 0 0.45rem;
+  color: var(--ink);
+  font-size: 1.35rem;
+  line-height: 1.15;
+}
+
+.think-card p:last-child {
+  margin: 0;
+}
+
+.think-end {
+  padding-top: 1.3rem;
+  padding-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+  .think-track {
+    display: block;
+  }
+
+  .think-stack {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .think-end {
+    padding-top: 2.4rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .reveal:not(.is-in),
@@ -836,5 +1052,30 @@
   .fav-heart {
     opacity: 1;
     transform: translate(-40%, -16px) scale(1);
+  }
+
+  .think-track {
+    display: none;
+  }
+
+  .think-stack {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 3rem var(--gutter) 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+
+  .think-title span,
+  .think-body,
+  .think-fruit,
+  .think-fruit.is-in,
+  .think-fruit.is-out {
+    opacity: 1;
+    transform: none;
+    animation: none;
   }
 }

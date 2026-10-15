@@ -340,41 +340,98 @@
 
 .about-courses {
   grid-column: 1 / -1;
-  margin-top: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.course-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.9rem;
+}
+
+.course-head .subsection-title {
+  margin: 0;
+}
+
+.course-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .course-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem 1.6rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.75rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.course-list li {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.7rem;
-  align-items: start;
+.course-card {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 9.4rem;
+  padding: 1rem 1.05rem 1.05rem;
+  border: 1px solid var(--card-border);
+  border-top: 4px solid var(--tone, var(--fruit-berry));
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--tone, var(--fruit-berry)) 10%, var(--card));
+  box-shadow: var(--shadow);
+  transition: transform 180ms ease;
 }
 
-.course-list h4 {
-  margin: 0 0 0.15rem;
+.course-card:nth-child(4),
+.course-card:nth-child(5) {
+  grid-column: span 3;
+}
+
+.course-year {
+  align-self: flex-start;
+  padding: 0.16rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tone, var(--fruit-berry)) 22%, var(--card));
   color: var(--ink);
-  font-size: 1.02rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
 }
 
-.course-list p,
-.course-note {
-  margin: 0;
+.course-card h4 {
+  margin: 0.15rem 0 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.course-card p {
+  margin: auto 0 0;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+}
+
+.course-card:hover {
+  transform: translateY(-4px);
 }
 
 .course-note {
-  margin-top: 1rem;
+  margin: 0.9rem 0 0;
+  padding: 0.8rem 1.15rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 6%, var(--card));
   color: var(--ink);
+  font-size: 0.95rem;
   font-weight: 700;
 }
 
@@ -520,6 +577,12 @@
   .project-grid,
   .course-list {
     grid-template-columns: 1fr;
+  }
+
+  .course-card,
+  .course-card:nth-child(4),
+  .course-card:nth-child(5) {
+    grid-column: auto;
   }
 
   .section-title {

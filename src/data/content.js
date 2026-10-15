@@ -11,6 +11,7 @@ export const nav = [
   { href: '#que-hago', label: 'Qué hago', dot: 'pear' },
   { href: '#proyectos', label: 'Proyectos', dot: 'bloom' },
   { href: '#ecosistema', label: 'Ecosistema IA', dot: 'star' },
+  { href: '#lo-que-pienso', label: 'Lo que pienso', dot: 'bloom' },
   { href: '#contacto', label: 'Contacto', dot: 'ink' },
 ]
 
@@ -82,10 +83,6 @@ export const about = {
       tone: 'berry',
     },
   ],
-  beliefTitle: 'Cómo veo la tecnología',
-  beliefLine: 'No quiero hacer tecnología por hacer tecnología.',
-  belief:
-    'La tecnología vale cuando alguien la usa sin pensar en ella. Prefiero una solución simple que funcione a una brillante que nadie entiende. Escucho primero, construyo después y vuelvo a ajustar hasta que encaje en la vida real de quien la va a usar.',
   principles: [
     { label: 'Simple antes que brillante', tone: 'berry' },
     { label: 'Primero escuchar', tone: 'pear' },
@@ -278,6 +275,42 @@ export const ecosystem = {
   ],
 }
 
+export const thoughts = {
+  label: 'Lo que pienso',
+  intro:
+    'No quiero hacer tecnología por hacer tecnología. Estas son algunas ideas que guían lo que hago.',
+  items: [
+    {
+      number: '01',
+      fruit: 'berry',
+      tone: 'berry',
+      title: 'La IA será una extensión del ser humano.',
+      text: 'No viene a reemplazarnos. Viene a ampliar lo que ya somos: pensar más rápido, crear más lejos, recordar lo que se nos escapa. Como un lápiz o un libro, pero más cerca.',
+    },
+    {
+      number: '02',
+      fruit: 'pear',
+      tone: 'pear',
+      title: 'Los ingenieros tenemos el ego muy alto.',
+      text: 'Me incluyo. A veces construimos para demostrar que sabemos, no para que alguien lo use. La industria tiene que cambiar, y ese cambio empieza desde dentro: escuchando más y presumiendo menos.',
+    },
+    {
+      number: '03',
+      fruit: 'star',
+      tone: 'star',
+      title: 'Un sistema que complica, falló.',
+      text: 'La tecnología debe ayudar, no estorbar. Si alguien necesita un manual para hacer algo simple, el problema no es la persona: es el sistema.',
+    },
+    {
+      number: '04',
+      fruit: 'bloom',
+      tone: 'bloom',
+      title: 'Hoy una buena conversación con una IA puede valer más que muchas charlas vacías.',
+      text: 'No reemplaza a nadie. Pero cuando encuentro curiosidad, paciencia y ganas de pensar, la aprovecho, venga de donde venga.',
+    },
+  ],
+}
+
 export const contact = {
   title: '¿HABLAMOS?',
   text: 'Un proyecto, una idea o una pregunta sobre tecnología. No tengo todas las respuestas, pero sí puedo pensarlas contigo.',
@@ -320,7 +353,7 @@ export const footer = {
         { href: '#sobre-mi', label: 'Sobre mí' },
         { href: '#formacion', label: 'Formación' },
         { href: '#cursos', label: 'Cursos' },
-        { href: '#tecnologia', label: 'Cómo veo la tecnología' },
+        { href: '#lo-que-pienso', label: 'Lo que pienso' },
       ],
     },
     {
