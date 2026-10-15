@@ -1,20 +1,31 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { sliceHeight } from '../utils/jelly'
 import { getContactShadowTexture } from '../utils/textures'
 import { advanceCut, createCutState, evaluateCut, tooSmallToCut } from './cut'
+import { PIECE_SCALE, restHeight } from './hulls'
 import { eachPiece } from './pieces'
 import { PULP, makeHalves } from './sliceFactory'
 
-const KNIFE_Y = 1.02
-const TRAIL_MS = 300
-const TRAIL_LIMIT = 48
+const FACE = {
+  berry: sliceHeight(),
+  orchard: sliceHeight(),
+  bloom: sliceHeight(),
+  tropic: sliceHeight({ depth: 0.13, bevelThickness: 0.18 }),
+}
+const FACE_Y =
+  ['berry', 'orchard', 'bloom', 'tropic'].reduce((sum, kind) => sum + restHeight(kind) + FACE[kind] * PIECE_SCALE, 0) / 4
+const KNIFE_SCALE = 1.6
+const EDGE_OFFSET = [-0.4143 * KNIFE_SCALE, 0.0611 * KNIFE_SCALE, 0]
+const TRAIL_MS = 250
+const TRAIL_LIMIT = 64
 
-function dampAngle(current, target, amount) {
+function dampAngle(current, target, lambda, dt) {
   let delta = target - current
   while (delta > Math.PI) delta -= Math.PI * 2
   while (delta < -Math.PI) delta += Math.PI * 2
-  return current + delta * amount
+  return current + delta * (1 - Math.exp(-lambda * Math.max(dt, 0)))
 }
 
 function KnifeModel() {
@@ -84,15 +95,15 @@ function KnifeModel() {
 
   return (
     <group>
-      <mesh geometry={blade} material={metal} castShadow />
-      <mesh material={handle} position={[-0.28, -0.012, 0]} castShadow>
+      <mesh geometry={blade} material={metal} castShadow raycast={() => null} />
+      <mesh material={handle} position={[-0.28, -0.012, 0]} castShadow raycast={() => null}>
         <boxGeometry args={[0.42, 0.09, 0.07]} />
       </mesh>
-      <mesh material={metal} position={[-0.08, -0.004, 0]}>
+      <mesh material={metal} position={[-0.08, -0.004, 0]} raycast={() => null}>
         <boxGeometry args={[0.06, 0.12, 0.05]} />
       </mesh>
       {[-0.18, -0.3, -0.42].map((x) => (
-        <mesh key={x} material={rivet} position={[x, 0.02, 0.028]}>
+        <mesh key={x} material={rivet} position={[x, 0.02, 0.028]} raycast={() => null}>
           <sphereGeometry args={[0.022, 16, 12]} />
         </mesh>
       ))}
@@ -103,19 +114,25 @@ function KnifeModel() {
 export default function Knife({ active, onCut }) {
   const camera = useThree((state) => state.camera)
   const gl = useThree((state) => state.gl)
-  const pointer = useThree((state) => state.pointer)
   const rig = useRef(null)
   const tilt = useRef(null)
   const shadow = useRef(null)
   const trailMesh = useRef(null)
   const dropsMesh = useRef(null)
+  const aim = useRef({ x: 0, y: 0, inside: false, seen: false })
+  const pose = useRef(new THREE.Vector3())
+  const posed = useRef(false)
+  const prevHit = useRef(new THREE.Vector3())
+  const velocity = useRef(new THREE.Vector2())
   const yaw = useRef(-0.4)
-  const lastClient = useRef(null)
-  const lastWorld = useRef(new THREE.Vector3())
-  const worldReady = useRef(false)
+  const desiredYaw = useRef(-0.4)
+  const yawTravel = useRef(0)
+  const lastYawClient = useRef({ x: 0, y: 0, ready: false })
   const hovering = useRef(false)
   const cutting = useRef(false)
+  const anchor = useRef(null)
   const tracks = useRef(new Map())
+  const stroke = useRef([])
   const trail = useRef([])
   const kick = useRef(0)
   const applied = useRef(new THREE.Vector3())
@@ -123,9 +140,12 @@ export default function Knife({ active, onCut }) {
   const shaking = useRef(false)
   const onCutRef = useRef(onCut)
   const raycaster = useMemo(() => new THREE.Raycaster(), [])
-  const knifePlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), -KNIFE_Y), [])
+  const knifePlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), -FACE_Y), [])
   const knifeHit = useMemo(() => new THREE.Vector3(), [])
-  const pieceHit = useMemo(() => new THREE.Vector3(), [])
+  const holdA = useMemo(() => new THREE.Vector3(), [])
+  const holdB = useMemo(() => new THREE.Vector3(), [])
+  const ndc = useMemo(() => new THREE.Vector2(), [])
+  const viewRay = useMemo(() => new THREE.Ray(), [])
   const dropDummy = useMemo(() => new THREE.Object3D(), [])
   const drops = useRef(
     Array.from({ length: 32 }, () => ({
@@ -206,6 +226,7 @@ export default function Knife({ active, onCut }) {
     const canvas = gl.domElement
     if (!active) {
       cutting.current = false
+      anchor.current = null
       canvas.style.cursor = ''
       canvas.style.touchAction = ''
       return undefined
@@ -216,21 +237,17 @@ export default function Knife({ active, onCut }) {
     canvas.style.touchAction = 'none'
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    const project = (api, clientX, clientY) => {
-      const plane = api.plane()
-      if (!plane) return null
+    const project = (clientX, clientY, target) => {
       const rect = canvas.getBoundingClientRect()
-      const ndcX = ((clientX - rect.left) / rect.width) * 2 - 1
-      const ndcY = -((clientY - rect.top) / rect.height) * 2 + 1
-      raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera)
-      if (!raycaster.ray.intersectPlane(plane, pieceHit)) return null
-      return api.toShape(pieceHit)
+      ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
+      ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(ndc, camera)
+      return raycaster.ray.intersectPlane(knifePlane, target) ? target : null
     }
 
     const burst = (point, color) => {
-      const slot = drops.current.find((drop) => drop.life <= 0) || drops.current[0]
       for (let index = 0; index < 8; index += 1) {
-        const drop = drops.current.find((item) => item.life <= 0) || slot
+        const drop = drops.current.find((item) => item.life <= 0) || drops.current[0]
         drop.life = reduced ? 0.12 : 0.5 + Math.random() * 0.12
         drop.max = drop.life
         drop.size = 0.028 + Math.random() * 0.028
@@ -240,38 +257,64 @@ export default function Knife({ active, onCut }) {
       }
     }
 
-    const sample = (from, to) => {
+    const cutSample = (from, to) => {
       const born = []
       const removed = []
+      const fromHit = project(from.x, from.y, knifeHit)
+      if (!fromHit) return
+      holdA.copy(fromHit)
+      const toHit = project(to.x, to.y, knifeHit)
+      if (!toHit) return
+      holdB.copy(toHit)
+      const fromWorld = holdA
+      const toWorld = holdB
+      stroke.current.push([toWorld.x, toWorld.y, toWorld.z])
+      if (stroke.current.length > 240) stroke.current.shift()
       eachPiece((api) => {
         if (api.spent || !api.cuttable()) return
-        const start = project(api, from.x, from.y)
-        const end = project(api, to.x, to.y)
+        viewRay.origin.copy(camera.position)
+        viewRay.direction.copy(fromWorld).sub(camera.position)
+        if (viewRay.direction.lengthSq() < 1e-8) return
+        viewRay.direction.normalize()
+        const start = api.toShapeRay ? api.toShapeRay(viewRay) : api.toShape(fromWorld)
+        viewRay.origin.copy(camera.position)
+        viewRay.direction.copy(toWorld).sub(camera.position)
+        if (viewRay.direction.lengthSq() < 1e-8) return
+        viewRay.direction.normalize()
+        const end = api.toShapeRay ? api.toShapeRay(viewRay) : api.toShape(toWorld)
         if (!start || !end) return
         let track = tracks.current.get(api.id)
         if (!track) {
-          track = { state: createCutState() }
+          track = { state: createCutState(), last: start }
           tracks.current.set(api.id, track)
+          advanceCut(track.state, start, start, api.outline())
         }
-        const result = advanceCut(track.state, start, end, api.outline())
+        const result = advanceCut(track.state, track.last, end, api.outline())
+        track.last = end
         if (!result) return
         const cut = evaluateCut(api.outline(), result)
         if (!cut) {
           track.state = createCutState()
+          advanceCut(track.state, end, end, api.outline())
           return
         }
         const snapshot = api.snapshot()
-        if (!snapshot || tooSmallToCut(snapshot.area, snapshot.originArea)) return
+        if (!snapshot || tooSmallToCut(snapshot.area, snapshot.originArea)) {
+          track.state = createCutState()
+          advanceCut(track.state, end, end, api.outline())
+          return
+        }
         try {
           const halves = makeHalves(snapshot, cut)
           api.spent = true
           removed.push(api.id)
           born.push(...halves)
-          const mid = cut.cutPath[Math.floor(cut.cutPath.length / 2)]
+          const mid = [(cut.cutPath[0][0] + cut.cutPath[1][0]) * 0.5, (cut.cutPath[0][1] + cut.cutPath[1][1]) * 0.5]
           burst(api.toWorld(mid[0], mid[1]), PULP[snapshot.kind])
           if (!reduced) kick.current = 0.042
         } catch {
           track.state = createCutState()
+          advanceCut(track.state, end, end, api.outline())
         }
       })
       if (born.length) onCutRef.current?.(born, removed)
@@ -282,8 +325,13 @@ export default function Knife({ active, onCut }) {
       if (event.target !== canvas) return
       cutting.current = true
       tracks.current = new Map()
+      stroke.current = []
       trail.current = []
-      lastClient.current = { x: event.clientX, y: event.clientY }
+      anchor.current = { x: event.clientX, y: event.clientY }
+      aim.current.x = event.clientX
+      aim.current.y = event.clientY
+      aim.current.seen = true
+      aim.current.inside = true
     }
     const onEnter = () => {
       hovering.current = true
@@ -299,24 +347,25 @@ export default function Knife({ active, onCut }) {
         event.clientY >= rect.top &&
         event.clientY <= rect.bottom
       hovering.current = inside || cutting.current
-      if (!cutting.current || !lastClient.current) return
+      aim.current.x = event.clientX
+      aim.current.y = event.clientY
+      aim.current.inside = hovering.current
+      aim.current.seen = true
+      if (!cutting.current || !anchor.current) return
       if (event.pointerType === 'touch') event.preventDefault()
-      const previous = lastClient.current
-      if (Math.hypot(event.clientX - previous.x, event.clientY - previous.y) < 2.5) return
-      sample(previous, { x: event.clientX, y: event.clientY })
-      lastClient.current = { x: event.clientX, y: event.clientY }
-      const ndcX = ((event.clientX - rect.left) / rect.width) * 2 - 1
-      const ndcY = -((event.clientY - rect.top) / rect.height) * 2 + 1
-      raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera)
-      if (raycaster.ray.intersectPlane(knifePlane, knifeHit)) {
-        trail.current.push({ x: knifeHit.x, y: 0.48, z: knifeHit.z, t: performance.now() })
-        if (trail.current.length > TRAIL_LIMIT) trail.current.shift()
+      const coalesced = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : null
+      const samples = coalesced && coalesced.length ? coalesced : [event]
+      for (const sample of samples) {
+        const next = { x: sample.clientX, y: sample.clientY }
+        if (Math.hypot(next.x - anchor.current.x, next.y - anchor.current.y) < 0.4) continue
+        cutSample(anchor.current, next)
+        anchor.current = next
       }
     }
     const onUp = () => {
       cutting.current = false
+      anchor.current = null
       tracks.current = new Map()
-      lastClient.current = null
     }
 
     canvas.addEventListener('pointerdown', onDown)
@@ -327,6 +376,7 @@ export default function Knife({ active, onCut }) {
     window.addEventListener('pointercancel', onUp)
     return () => {
       cutting.current = false
+      anchor.current = null
       canvas.style.cursor = previousCursor
       canvas.style.touchAction = previousTouch
       canvas.removeEventListener('pointerdown', onDown)
@@ -336,15 +386,78 @@ export default function Knife({ active, onCut }) {
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
     }
-  }, [active, camera, gl, knifeHit, knifePlane, pieceHit, raycaster])
+  }, [active, camera, gl, holdA, holdB, knifeHit, knifePlane, ndc, raycaster, viewRay])
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     const step = Math.min(delta, 0.033)
     if (shaking.current) {
       const expected = base.current.clone().add(applied.current)
       if (camera.position.distanceTo(expected) < 0.004) camera.position.copy(base.current)
     }
     base.current.copy(camera.position)
+
+    const pointer = aim.current
+    const showKnife = active && pointer.seen && (hovering.current || cutting.current)
+    if (rig.current) {
+      let hit = null
+      if (showKnife) {
+        const rect = gl.domElement.getBoundingClientRect()
+        ndc.x = ((pointer.x - rect.left) / rect.width) * 2 - 1
+        ndc.y = -((pointer.y - rect.top) / rect.height) * 2 + 1
+        raycaster.setFromCamera(ndc, camera)
+        hit = raycaster.ray.intersectPlane(knifePlane, knifeHit) ? knifeHit : null
+      }
+      rig.current.visible = Boolean(showKnife && hit)
+      if (shadow.current) shadow.current.visible = Boolean(showKnife && hit)
+      if (hit) {
+        if (!posed.current) {
+          pose.current.set(hit.x, FACE_Y, hit.z)
+          prevHit.current.copy(hit)
+          posed.current = true
+          velocity.current.set(0, 0)
+        } else {
+          pose.current.x = THREE.MathUtils.damp(pose.current.x, hit.x, 25, step)
+          pose.current.z = THREE.MathUtils.damp(pose.current.z, hit.z, 25, step)
+          pose.current.y = FACE_Y
+          const instX = (hit.x - prevHit.current.x) / Math.max(step, 1e-4)
+          const instZ = (hit.z - prevHit.current.z) / Math.max(step, 1e-4)
+          velocity.current.x = THREE.MathUtils.damp(velocity.current.x, instX, 12, step)
+          velocity.current.y = THREE.MathUtils.damp(velocity.current.y, instZ, 12, step)
+          prevHit.current.copy(hit)
+        }
+        const sample = lastYawClient.current
+        const moved = sample.ready ? Math.hypot(pointer.x - sample.x, pointer.y - sample.y) : 0
+        sample.x = pointer.x
+        sample.y = pointer.y
+        sample.ready = true
+        if (moved > 0.75) {
+          yawTravel.current += moved
+          if (yawTravel.current >= 4) {
+            const speed = velocity.current.length()
+            if (speed > 0.2) desiredYaw.current = Math.atan2(-velocity.current.y, velocity.current.x)
+            yawTravel.current = 0
+          }
+          yaw.current = dampAngle(yaw.current, desiredYaw.current, 18, step)
+        }
+        rig.current.position.copy(pose.current)
+        if (tilt.current) {
+          tilt.current.rotation.order = 'YXZ'
+          tilt.current.rotation.set(0.68, yaw.current, -0.28)
+        }
+        if (shadow.current) {
+          shadow.current.position.set(pose.current.x, 0.014, pose.current.z)
+          shadow.current.rotation.y = yaw.current
+        }
+        if (cutting.current) {
+          const last = trail.current[trail.current.length - 1]
+          if (!last || Math.hypot(last.x - pose.current.x, last.z - pose.current.z) > 0.008) {
+            trail.current.push({ x: pose.current.x, y: pose.current.y + 0.02, z: pose.current.z, t: performance.now() })
+            if (trail.current.length > TRAIL_LIMIT) trail.current.shift()
+          }
+        }
+      }
+    }
+
     applied.current.set(0, 0, 0)
     shaking.current = kick.current > 0.001
     if (shaking.current) {
@@ -353,57 +466,39 @@ export default function Knife({ active, onCut }) {
       camera.position.add(applied.current)
     }
 
-    if (rig.current) {
-      raycaster.setFromCamera(pointer, camera)
-      const hit = raycaster.ray.intersectPlane(knifePlane, knifeHit)
-      const visible = active && (hovering.current || cutting.current) && Boolean(hit)
-      rig.current.visible = visible
-      if (shadow.current) shadow.current.visible = visible
-      if (hit && tilt.current) {
-        if (worldReady.current) {
-          const dx = hit.x - lastWorld.current.x
-          const dz = hit.z - lastWorld.current.z
-          if (dx * dx + dz * dz > 0.00004) yaw.current = dampAngle(yaw.current, Math.atan2(-dz, dx), 0.35)
-        }
-        lastWorld.current.copy(hit)
-        worldReady.current = true
-        rig.current.position.set(hit.x, hit.y + Math.sin(state.clock.elapsedTime * 3) * 0.03, hit.z)
-        tilt.current.rotation.order = 'YXZ'
-        tilt.current.rotation.set(0.68, yaw.current, -0.28)
-        if (shadow.current) {
-          shadow.current.position.set(hit.x, 0.014, hit.z)
-          shadow.current.rotation.y = yaw.current
-        }
-      }
-    }
-
     const now = performance.now()
     const points = trail.current.filter((point) => now - point.t < TRAIL_MS)
     trail.current = points
     const position = trailGeometry.getAttribute('position')
     const alpha = trailGeometry.getAttribute('aAlpha')
+    const head = Math.max(points.length - 1, 1)
     let cursor = 0
     for (let index = 1; index < points.length; index += 1) {
       const previous = points[index - 1]
       const current = points[index]
       const age = 1 - (now - current.t) / TRAIL_MS
-      const width = 0.012 + 0.028 * (index / points.length)
+      const width0 = THREE.MathUtils.lerp(0.004, 0.05, (index - 1) / head)
+      const width1 = THREE.MathUtils.lerp(0.004, 0.05, index / head)
       const dx = current.x - previous.x
       const dz = current.z - previous.z
       const length = Math.hypot(dx, dz) || 1
-      const nx = (-dz / length) * width
-      const nz = (dx / length) * width
+      const nx0 = (-dz / length) * width0
+      const nz0 = (dx / length) * width0
+      const nx1 = (-dz / length) * width1
+      const nz1 = (dx / length) * width1
+      const fade0 = Math.max(1 - (now - previous.t) / TRAIL_MS, 0) * 0.55
+      const fade1 = Math.max(age, 0) * 0.55
       const quad = [
-        [previous.x - nx, previous.y, previous.z - nz],
-        [previous.x + nx, previous.y, previous.z + nz],
-        [current.x + nx, current.y, current.z + nz],
-        [previous.x - nx, previous.y, previous.z - nz],
-        [current.x + nx, current.y, current.z + nz],
-        [current.x - nx, current.y, current.z - nz],
+        [previous.x - nx0, previous.y, previous.z - nz0, fade0],
+        [previous.x + nx0, previous.y, previous.z + nz0, fade0],
+        [current.x + nx1, current.y, current.z + nz1, fade1],
+        [previous.x - nx0, previous.y, previous.z - nz0, fade0],
+        [current.x + nx1, current.y, current.z + nz1, fade1],
+        [current.x - nx1, current.y, current.z - nz1, fade1],
       ]
       for (const vertex of quad) {
         position.setXYZ(cursor, vertex[0], vertex[1], vertex[2])
-        alpha.setX(cursor, Math.max(age, 0) * 0.55)
+        alpha.setX(cursor, vertex[3])
         cursor += 1
       }
     }
@@ -438,11 +533,13 @@ export default function Knife({ active, onCut }) {
     <group>
       <group ref={rig} visible={false}>
         <group ref={tilt}>
-          <KnifeModel />
+          <group scale={KNIFE_SCALE} position={EDGE_OFFSET} raycast={() => null}>
+            <KnifeModel />
+          </group>
         </group>
       </group>
       <mesh ref={shadow} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.014, 0]} visible={false} raycast={() => null}>
-        <circleGeometry args={[0.34, 24]} />
+        <circleGeometry args={[0.52, 24]} />
         <primitive object={shadowMaterial} attach="material" />
       </mesh>
       <mesh ref={trailMesh} geometry={trailGeometry} material={trailMaterial} frustumCulled={false} raycast={() => null} />

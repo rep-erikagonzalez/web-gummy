@@ -59,13 +59,15 @@ export function isNarrow(width) {
 
 export function frameOf(width, height) {
   const narrow = isNarrow(width)
+  const phone = width < 640
   const aspect = width / Math.max(height, 1)
   let minX = Infinity
   let maxX = -Infinity
   let minZ = Infinity
   let maxZ = -Infinity
 
-  for (const placement of Object.values(PLACEMENTS)) {
+  for (const [id, placement] of Object.entries(PLACEMENTS)) {
+    if (phone && (id === 'bloom-b' || id === 'bloom-c')) continue
     const [x, z] = narrow ? placement.narrow : placement.wide
     minX = Math.min(minX, x)
     maxX = Math.max(maxX, x)
@@ -73,7 +75,7 @@ export function frameOf(width, height) {
     maxZ = Math.max(maxZ, z)
   }
 
-  const pad = 1.15
+  const pad = phone ? 1.42 : 1.15
   minX -= pad
   maxX += pad
   minZ -= pad
@@ -85,12 +87,12 @@ export function frameOf(width, height) {
   const clusterZ = (minZ + maxZ) / 2
   const fov = narrow ? 32 : 28
   const shiftX = narrow ? 0 : halfW * 0.46
-  const short = narrow && height < 520
+  const short = !phone && narrow && height < 520
   const shiftZ = narrow ? (short ? halfD * 0.12 : 0) : halfD * 0.04
   const lookX = clusterX - shiftX
   const lookZ = clusterZ - shiftZ
   const needHalfW = Math.abs(clusterX - lookX) + halfW + 0.35
-  const needHalfD = Math.abs(clusterZ - lookZ) + halfD + (short ? 2.55 : narrow ? 1.2 : 1.15)
+  const needHalfD = Math.abs(clusterZ - lookZ) + halfD + (short ? 2.55 : phone ? 2.55 : narrow ? 1.2 : 1.15)
   const vFov = (fov * Math.PI) / 180
   const distH = needHalfD / Math.tan(vFov / 2)
   const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect)

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import * as THREE from 'three'
@@ -6,9 +6,9 @@ import Grove from './Grove'
 import Lights from './Lights'
 import ResponsiveCamera from './ResponsiveCamera'
 
-function StudioEnvironment() {
+function StudioEnvironment({ compact }) {
   return (
-    <Environment frames={1} resolution={256} environmentIntensity={0.22}>
+    <Environment frames={1} resolution={compact ? 64 : 256} environmentIntensity={0.22}>
       <Lightformer
         form="rect"
         intensity={0.85}
@@ -73,6 +73,68 @@ function Reveal({ onReady }) {
   return null
 }
 
+function ZoneTouch() {
+  const gl = useThree((state) => state.gl)
+  const camera = useThree((state) => state.camera)
+  const scene = useThree((state) => state.scene)
+  const raycaster = useMemo(() => new THREE.Raycaster(), [])
+  const pointer = useMemo(() => new THREE.Vector2(), [])
+
+  useEffect(() => {
+    const canvas = gl.domElement
+    let tracking = null
+
+    const hitsPiece = (event) => {
+      const rect = canvas.getBoundingClientRect()
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, camera)
+      return raycaster.intersectObjects(scene.children, true).some((hit) => {
+        let node = hit.object
+        while (node) {
+          if (node.userData?.candy) return true
+          node = node.parent
+        }
+        return false
+      })
+    }
+
+    const onDown = (event) => {
+      if (event.pointerType !== 'touch' || canvas.style.touchAction === 'none') return
+      if (hitsPiece(event)) {
+        event.preventDefault()
+        return
+      }
+      tracking = { id: event.pointerId, y: event.clientY }
+    }
+
+    const onMove = (event) => {
+      if (!tracking || event.pointerId !== tracking.id) return
+      const delta = tracking.y - event.clientY
+      tracking.y = event.clientY
+      if (delta) window.scrollTo({ top: window.scrollY + delta, behavior: 'instant' })
+    }
+
+    const onEnd = (event) => {
+      if (!tracking || event.pointerId !== tracking.id) return
+      tracking = null
+    }
+
+    canvas.addEventListener('pointerdown', onDown, { passive: false })
+    window.addEventListener('pointermove', onMove, { passive: true })
+    window.addEventListener('pointerup', onEnd)
+    window.addEventListener('pointercancel', onEnd)
+    return () => {
+      canvas.removeEventListener('pointerdown', onDown)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onEnd)
+      window.removeEventListener('pointercancel', onEnd)
+    }
+  }, [camera, gl, pointer, raycaster, scene])
+
+  return null
+}
+
 function AdaptiveQuality() {
   const regress = useThree((state) => state.performance.regress)
   useFrame((_, delta) => {
@@ -97,6 +159,14 @@ export default function Scene({
   severed,
   onCut,
   onFragmentGone,
+  compact = false,
+  onReady,
+  hold = false,
+  released = [],
+  dropIn = false,
+  fadeIn = false,
+  leaving = false,
+  wave = 0,
 }) {
   const [ready, setReady] = useState(false)
   const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 820px)').matches)
@@ -113,12 +183,13 @@ export default function Scene({
     <div className="scene">
       {ready ? null : <div className="scene-pending" aria-hidden="true" />}
       <Canvas
+        key={compact ? 'compact' : 'wide'}
         className={ready ? 'scene-ready' : 'scene-waiting'}
-        dpr={narrow ? [1, 1] : [1, 1.5]}
+        dpr={compact ? [1, 1.5] : narrow ? [1, 1] : [1, 1.5]}
         performance={{ min: 0.5, debounce: 300 }}
         camera={{ position: [0.2, 12, 1.8], fov: 28, near: 0.1, far: 90 }}
         gl={{
-          antialias: true,
+          antialias: !compact,
           alpha: true,
           powerPreference: 'high-performance',
           failIfMajorPerformanceCaveat: false,
@@ -134,19 +205,25 @@ export default function Scene({
         }}
       >
         <ResponsiveCamera angled={angled} onSettled={() => setPoseEpoch((value) => value + 1)} />
+        <ZoneTouch />
         <AdaptiveQuality />
         <Exposure theme={theme} />
         <Lights theme={theme} />
         <Suspense fallback={null}>
-          <StudioEnvironment />
+          <StudioEnvironment compact={compact} />
           <EnvIntensity value={theme === 'dark' ? 0.34 : 0.22} />
-          <Reveal onReady={() => setReady(true)} />
+          <Reveal
+            onReady={() => {
+              setReady(true)
+              onReady?.()
+            }}
+          />
           <Grove
             drops={drops}
             feel={feel}
             shakeToken={shakeToken}
             resetToken={resetToken}
-            paused={paused}
+            paused={paused && !hold}
             onGone={onGone}
             scaleMode={scaleMode}
             showTags={showTags}
@@ -156,6 +233,12 @@ export default function Scene({
             severed={severed}
             onCut={onCut}
             onFragmentGone={onFragmentGone}
+            compact={compact}
+            released={released}
+            dropIn={dropIn}
+            fadeIn={fadeIn}
+            leaving={leaving}
+            wave={wave}
           />
         </Suspense>
       </Canvas>

@@ -454,15 +454,34 @@
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
   .band {
+    overflow-x: hidden;
     padding-inline: 24px;
   }
 
   .stat-row,
   .service-row,
-  .about-layout {
+  .about-layout,
+  .project-grid {
     grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: clamp(1.7rem, 8vw, 3.2rem);
+  }
+
+  .about-side {
+    align-items: center;
+    text-align: center;
+  }
+
+  .portrait-wrap {
+    margin-inline: auto;
+  }
+
+  .about-copy {
+    text-align: center;
   }
 
   .decor-piece {

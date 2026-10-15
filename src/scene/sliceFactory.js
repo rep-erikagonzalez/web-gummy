@@ -305,12 +305,13 @@ export function makeHalves(snapshot, cut) {
   const quat = new THREE.Quaternion(...snapshot.quaternion)
   const perp = new THREE.Vector3(-dy / length, 0, dx / length).applyQuaternion(quat).normalize()
   const tangent = new THREE.Vector3(dx / length, 0, -dy / length).applyQuaternion(quat).normalize()
+  const bulk = [1, 1.25, 1.5, 1.75, 2][snapshot.bulkStep] ?? 1
+  const push = 1.15 * bulk * bulk * bulk
   const specs = []
   try {
     for (let index = 0; index < 2; index += 1) {
       const sign = index === 0 ? 1 : -1
       const area = cut.areas[index]
-      const heft = Math.sqrt(Math.max(area, 1e-4) / snapshot.originArea)
       const suffix = snapshot.suffix ? `${snapshot.suffix}·${index === 0 ? 'a' : 'b'}` : index === 0 ? 'a' : 'b'
       const spec = {
         id: `cut-${cutSerial++}`,
@@ -320,22 +321,22 @@ export function makeHalves(snapshot, cut) {
         points: cut.loops[index],
         cutPath: cut.cutPath,
         position: [
-          snapshot.position[0] + perp.x * 0.045 * sign,
-          snapshot.position[1] + perp.y * 0.045 * sign,
-          snapshot.position[2] + perp.z * 0.045 * sign,
+          snapshot.position[0] + perp.x * 0.05 * sign,
+          snapshot.position[1] + perp.y * 0.05 * sign,
+          snapshot.position[2] + perp.z * 0.05 * sign,
         ],
         quaternion: snapshot.quaternion.slice(),
         linvel: [
-          snapshot.linvel[0] + perp.x * 0.55 * heft * sign,
-          snapshot.linvel[1] + perp.y * 0.55 * heft * sign + 0.16,
-          snapshot.linvel[2] + perp.z * 0.55 * heft * sign,
+          snapshot.linvel[0] + perp.x * 1.7 * sign,
+          snapshot.linvel[1] + perp.y * 1.7 * sign + 0.06,
+          snapshot.linvel[2] + perp.z * 1.7 * sign,
         ],
         angvel: [
-          snapshot.angvel[0] + tangent.x * 1.7 * sign,
-          snapshot.angvel[1] + tangent.y * 1.7 * sign,
-          snapshot.angvel[2] + tangent.z * 1.7 * sign,
+          snapshot.angvel[0] + tangent.x * 0.75 * sign,
+          snapshot.angvel[1] + tangent.y * 0.75 * sign,
+          snapshot.angvel[2] + tangent.z * 0.75 * sign,
         ],
-        impulse: [perp.x * 0.32 * heft * sign, perp.y * 0.32 * heft * sign, perp.z * 0.32 * heft * sign],
+        impulse: [perp.x * push * sign, perp.y * push * sign, perp.z * push * sign],
         bulkStep: snapshot.bulkStep,
         area,
         originArea: snapshot.originArea,

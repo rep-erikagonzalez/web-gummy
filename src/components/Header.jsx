@@ -18,6 +18,14 @@ function NavLinks({ onNavigate }) {
   ))
 }
 
+function MenuIcon({ open }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+    </svg>
+  )
+}
+
 export default function Header({ theme, onToggleTheme }) {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
@@ -35,12 +43,27 @@ export default function Header({ theme, onToggleTheme }) {
     const onKey = (event) => {
       if (event.key === 'Escape') setOpen(false)
     }
+    const html = document.documentElement
+    const previous = html.style.overflow
+    html.style.overflow = 'hidden'
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => {
+      html.style.overflow = previous
+      window.removeEventListener('keydown', onKey)
+    }
   }, [open])
 
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1025px)')
+    const close = () => {
+      if (media.matches) setOpen(false)
+    }
+    media.addEventListener('change', close)
+    return () => media.removeEventListener('change', close)
+  }, [])
+
   return (
-    <header className={`site-header${scrolled ? ' is-scrolled' : ''}`}>
+    <header className={`site-header${scrolled ? ' is-scrolled' : ''}${open ? ' is-menu' : ''}`}>
       <a className="brand-lockup" href="#inicio">
         <span className="logo-marks" aria-hidden="true">
           <i />
@@ -54,16 +77,17 @@ export default function Header({ theme, onToggleTheme }) {
       </nav>
 
       <div className="header-tools">
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         <button
           type="button"
           className="nav-toggle"
           aria-expanded={open}
           aria-controls={panelId}
+          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
           onClick={() => setOpen((value) => !value)}
         >
-          {open ? 'Cerrar' : 'Menú'}
+          <MenuIcon open={open} />
         </button>
-        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
       </div>
 
       <nav id={panelId} className={`nav-panel${open ? ' is-open' : ''}`} aria-label="Secciones">

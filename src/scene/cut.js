@@ -126,22 +126,14 @@ function clean(points) {
 }
 
 export function evaluateCut(outline, result) {
-  const cutPath = clean([[result.entry.x, result.entry.y], ...result.path, [result.exit.x, result.exit.y]])
-  if (cutPath.length < 2) return null
+  const entry = [result.entry.x, result.entry.y]
+  const exit = [result.exit.x, result.exit.y]
+  if (Math.hypot(entry[0] - exit[0], entry[1] - exit[1]) < 1e-3) return null
+  const cutPath = [entry, exit]
   const forward = walk(outline, result.entry, result.exit)
   const backward = walk(outline, result.exit, result.entry)
-  const loopA = clean([
-    [result.entry.x, result.entry.y],
-    ...result.path,
-    [result.exit.x, result.exit.y],
-    ...backward.slice(1, -1),
-  ])
-  const loopB = clean([
-    [result.entry.x, result.entry.y],
-    ...forward.slice(1, -1),
-    [result.exit.x, result.exit.y],
-    ...[...result.path].reverse(),
-  ])
+  const loopA = clean([entry, exit, ...backward.slice(1, -1)])
+  const loopB = clean([entry, ...forward.slice(1, -1), exit])
   if (loopA.length < 3 || loopB.length < 3) return null
   const whole = polygonArea(outline)
   const areaA = polygonArea(loopA)

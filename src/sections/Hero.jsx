@@ -1,12 +1,39 @@
 import { Component, useCallback, useEffect, useRef, useState } from 'react'
 import { FlatCluster } from '../components/flat-jellies/FlatFruits'
 import { CATALOG, CATEGORY_ORDER } from '../scene/catalog'
+import { initialIds } from '../scene/Grove'
 import Scene from '../scene/Scene'
+
+function shuffle(list) {
+  const next = [...list]
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1))
+    const current = next[index]
+    next[index] = next[swap]
+    next[swap] = current
+  }
+  return next
+}
+
+function TitleLine({ text, start }) {
+  return (
+    <span className="hero-line" aria-hidden="true">
+      {[...text].map((char, index) => (
+        <span key={`${text}-${index}`} className="hero-letter" style={{ '--i': start + index }}>
+          {char}
+        </span>
+      ))}
+    </span>
+  )
+}
 
 const CATEGORIES = CATEGORY_ORDER.map((id) => ({ id, ...CATALOG[id] }))
 
-const INITIAL_COUNT = 8
 const PIECE_CAP = 40
+
+function initialCount() {
+  return window.matchMedia('(max-width: 639px)').matches ? 6 : 8
+}
 
 function capFragments(fragments, livingInitials, drops) {
   const others = livingInitials + drops.filter((drop) => drop.phase !== 'out').length
@@ -38,7 +65,7 @@ function pieceLimit() {
 }
 
 function trimToLimit(drops, extra = 0) {
-  let overflow = INITIAL_COUNT + drops.length + extra - pieceLimit()
+  let overflow = initialCount() + drops.length + extra - pieceLimit()
   if (overflow <= 0) return drops
   return drops.map((drop) => {
     if (overflow > 0 && drop.phase !== 'out') {
@@ -67,6 +94,16 @@ class SceneBoundary extends Component {
 
 export default function Hero({ theme }) {
   const [webgl] = useState(supportsWebGL)
+  const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 639px)').matches)
+  const [live, setLive] = useState(false)
+  const [sceneReady, setSceneReady] = useState(false)
+  const [introKey, setIntroKey] = useState(0)
+  const [released, setReleased] = useState([])
+  const [dropIn, setDropIn] = useState(false)
+  const [fadeIn, setFadeIn] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  const [hold, setHold] = useState(false)
+  const [chromeDelay, setChromeDelay] = useState('1.45s')
   const [feel, setFeel] = useState('soft')
   const [shakeToken, setShakeToken] = useState(0)
   const [resetToken, setResetToken] = useState(0)
@@ -78,12 +115,16 @@ export default function Hero({ theme }) {
   const [angled, setAngled] = useState(false)
   const [fragments, setFragments] = useState([])
   const [severed, setSevered] = useState(() => new Set())
+  const compactRef = useRef(compact)
+  const resetTimer = useRef(0)
+  const introTimers = useRef([])
   const nextId = useRef(1)
   const serials = useRef({ berry: 2, bloom: 3, orchard: 2, tropic: 1 })
   const dropsRef = useRef([])
   const fragmentsRef = useRef([])
   const severedRef = useRef(new Set())
   const fallback = <FlatCluster />
+  compactRef.current = compact
 
   const removeDrop = useCallback((id) => {
     const next = dropsRef.current.filter((drop) => drop.id !== id)
@@ -104,7 +145,7 @@ export default function Hero({ theme }) {
     }
     const nextDrops = dropsRef.current.filter((drop) => !removed.includes(drop.id))
     const kept = fragmentsRef.current.filter((fragment) => !removed.includes(fragment.id))
-    const nextFragments = capFragments([...kept, ...born], INITIAL_COUNT - nextSevered.size, nextDrops)
+    const nextFragments = capFragments([...kept, ...born], initialCount() - nextSevered.size, nextDrops)
     severedRef.current = nextSevered
     dropsRef.current = nextDrops
     fragmentsRef.current = nextFragments
@@ -112,6 +153,60 @@ export default function Hero({ theme }) {
     setDrops(nextDrops)
     setFragments(nextFragments)
   }, [])
+
+  const handleReady = useCallback(() => {
+    const count = initialIds(compactRef.current).length
+    const releaseEnd = 0.4 + Math.max(0, count - 1) * 0.12
+    setChromeDelay(`${(releaseEnd + 0.2).toFixed(2)}s`)
+    setSceneReady(true)
+    setLive(true)
+    setIntroKey((key) => (key === 0 ? 1 : key))
+  }, [])
+
+  useEffect(() => {
+    if (webgl) {
+      const timer = window.setTimeout(() => setLive(true), 4000)
+      return () => window.clearTimeout(timer)
+    }
+    setLive(true)
+    return undefined
+  }, [webgl])
+
+  useEffect(() => {
+    if (!sceneReady || introKey === 0) return undefined
+    const ids = shuffle(initialIds(compactRef.current))
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const timers = []
+    setHold(true)
+    if (reduced) {
+      setDropIn(false)
+      setFadeIn(true)
+      setReleased(ids)
+      timers.push(window.setTimeout(() => setFadeIn(false), 50))
+      timers.push(window.setTimeout(() => setHold(false), 400))
+    } else {
+      setFadeIn(false)
+      setDropIn(true)
+      setReleased([])
+      ids.forEach((id, index) => {
+        timers.push(
+          window.setTimeout(() => {
+            setReleased((current) => (current.includes(id) ? current : [...current, id]))
+          }, 400 + index * 120),
+        )
+      })
+      const releaseEnd = 400 + Math.max(0, ids.length - 1) * 120
+      timers.push(window.setTimeout(() => setDropIn(false), releaseEnd + 80))
+      timers.push(window.setTimeout(() => setHold(false), releaseEnd + 2000))
+    }
+    introTimers.current = timers
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer))
+      introTimers.current = []
+    }
+  }, [introKey, sceneReady])
+
+  useEffect(() => () => window.clearTimeout(resetTimer.current), [])
 
   useEffect(() => {
     const hero = document.getElementById('inicio')
@@ -124,14 +219,20 @@ export default function Hero({ theme }) {
   }, [])
 
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 820px)')
+    const narrow = window.matchMedia('(max-width: 820px)')
+    const phone = window.matchMedia('(max-width: 639px)')
     const trim = () => {
+      setCompact(phone.matches)
       const next = trimToLimit(dropsRef.current)
       dropsRef.current = next
       setDrops(next)
     }
-    media.addEventListener('change', trim)
-    return () => media.removeEventListener('change', trim)
+    narrow.addEventListener('change', trim)
+    phone.addEventListener('change', trim)
+    return () => {
+      narrow.removeEventListener('change', trim)
+      phone.removeEventListener('change', trim)
+    }
   }, [])
 
   const spawn = (category) => {
@@ -146,7 +247,7 @@ export default function Hero({ theme }) {
       }
     })
     const nextDrops = trimToLimit([...dropsRef.current, ...added])
-    const nextFragments = capFragments(fragmentsRef.current, INITIAL_COUNT - severedRef.current.size, nextDrops)
+    const nextFragments = capFragments(fragmentsRef.current, initialCount() - severedRef.current.size, nextDrops)
     dropsRef.current = nextDrops
     fragmentsRef.current = nextFragments
     setDrops(nextDrops)
@@ -154,13 +255,29 @@ export default function Hero({ theme }) {
   }
 
   const reset = () => {
-    dropsRef.current = []
-    fragmentsRef.current = []
-    severedRef.current = new Set()
-    setDrops([])
-    setFragments([])
-    setSevered(new Set())
+    window.clearTimeout(resetTimer.current)
+    introTimers.current.forEach((timer) => window.clearTimeout(timer))
+    introTimers.current = []
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const nextDrops = dropsRef.current.map((drop) => ({ ...drop, phase: 'out' }))
+    const nextFragments = fragmentsRef.current.map((fragment) => ({ ...fragment, phase: 'out' }))
+    dropsRef.current = nextDrops
+    fragmentsRef.current = nextFragments
+    setDrops(nextDrops)
+    setFragments(nextFragments)
+    setLeaving(true)
     setResetToken((value) => value + 1)
+    resetTimer.current = window.setTimeout(() => {
+      dropsRef.current = []
+      fragmentsRef.current = []
+      severedRef.current = new Set()
+      setDrops([])
+      setFragments([])
+      setSevered(new Set())
+      setLeaving(false)
+      setReleased([])
+      setIntroKey((key) => key + 1)
+    }, reduced ? 40 : 480)
   }
 
   const toggleScale = () => {
@@ -180,11 +297,16 @@ export default function Hero({ theme }) {
       : 'Arrastra una gominola'
 
   return (
-    <section className="hero" id="inicio" aria-label="Inicio">
+    <section
+      className={live ? 'hero is-live' : 'hero'}
+      id="inicio"
+      aria-label="Inicio"
+      style={live ? { '--chrome-delay': chromeDelay } : undefined}
+    >
       <div className="hero-column">
-        <h1 className="hero-title">
-          <span>ERIKA</span>
-          <span>GONZÁLEZ</span>
+        <h1 className="hero-title" aria-label="ERIKA GONZÁLEZ">
+          <TitleLine text="ERIKA" start={0} />
+          <TitleLine text="GONZÁLEZ" start={5} />
         </h1>
         <div className="hero-copy">
           <p className="hero-kicker">Del código a la vida real.</p>
@@ -200,6 +322,7 @@ export default function Hero({ theme }) {
         </div>
       </div>
 
+      <div className="hero-stage">
       {webgl ? (
         <SceneBoundary fallback={fallback}>
           <Scene
@@ -218,6 +341,14 @@ export default function Hero({ theme }) {
             severed={severed}
             onCut={applyCuts}
             onFragmentGone={removeFragment}
+            compact={compact}
+            onReady={handleReady}
+            hold={hold}
+            released={released}
+            dropIn={dropIn}
+            fadeIn={fadeIn}
+            leaving={leaving}
+            wave={introKey}
           />
         </SceneBoundary>
       ) : (
@@ -235,7 +366,7 @@ export default function Hero({ theme }) {
             ))}
           </div>
           <div className="hero-play">
-            <p>{hint}</p>
+            <p className="hero-hint">{hint}</p>
             <div className="hero-tools" role="group" aria-label="Física de las gominolas">
               <button
                 type="button"
@@ -295,6 +426,7 @@ export default function Hero({ theme }) {
           </div>
         </>
       ) : null}
+      </div>
     </section>
   )
 }

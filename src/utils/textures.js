@@ -373,11 +373,13 @@ export function paintBlossom(ctx, size) {
   ctx.fill()
 }
 
-let contactShadow
+const contactShadows = new Map()
 
 export function getContactShadowTexture() {
-  if (contactShadow) return contactShadow
-  contactShadow = makeCanvasTexture((ctx, size) => {
+  const resolution = window.matchMedia('(max-width: 639px)').matches ? 64 : 256
+  const cached = contactShadows.get(resolution)
+  if (cached) return cached
+  const contactShadow = makeCanvasTexture((ctx, size) => {
     const gradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.04, size / 2, size / 2, size / 2)
     gradient.addColorStop(0, 'rgba(28, 28, 34, 0.55)')
     gradient.addColorStop(0.38, 'rgba(28, 28, 34, 0.2)')
@@ -385,6 +387,7 @@ export function getContactShadowTexture() {
     gradient.addColorStop(1, 'rgba(28, 28, 34, 0)')
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, size, size)
-  }, null, 256)
+  }, null, resolution)
+  contactShadows.set(resolution, contactShadow)
   return contactShadow
 }

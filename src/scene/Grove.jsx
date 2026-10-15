@@ -4,7 +4,15 @@ import { useThree } from '@react-three/fiber'
 import Arena from './Arena'
 import Candy from './Candy'
 import Knife from './Knife'
+import { PIECE_SCALE } from './hulls'
 import { PLACEMENTS, isNarrow } from './layout'
+
+const PHONE_HIDDEN = new Set(['bloom-b', 'bloom-c'])
+
+export function initialIds(compact) {
+  const roster = compact ? INITIAL.filter((piece) => !PHONE_HIDDEN.has(piece.id)) : INITIAL
+  return roster.map((piece) => piece.id)
+}
 
 const INITIAL = [
   { id: 'strawberry-a', kind: 'berry', serial: 1 },
@@ -32,20 +40,29 @@ export default function Grove({
   severed,
   onCut,
   onFragmentGone,
+  compact = false,
+  released = [],
+  dropIn = false,
+  fadeIn = false,
+  leaving = false,
+  wave = 0,
 }) {
   const width = useThree((state) => state.size.width)
   const narrow = isNarrow(width)
   const boundsRef = useRef(null)
   const hidden = severed ?? new Set()
+  const visible = new Set(released)
+  const roster = compact ? INITIAL.filter((piece) => !PHONE_HIDDEN.has(piece.id)) : INITIAL
+  const bodyScale = compact ? PIECE_SCALE * 1.2 : PIECE_SCALE
 
   return (
     <Physics gravity={[0, -22, 0]} timeStep={1 / 60} paused={paused} numSolverIterations={4}>
       <Arena boundsRef={boundsRef} poseEpoch={poseEpoch} />
-      {INITIAL.filter((piece) => !hidden.has(piece.id)).map((piece) => {
+      {roster.filter((piece) => visible.has(piece.id) && !hidden.has(piece.id)).map((piece) => {
         const placement = PLACEMENTS[piece.id]
         return (
           <Candy
-            key={`${piece.id}-${narrow ? 'narrow' : 'wide'}`}
+            key={`${piece.id}-${narrow ? 'narrow' : 'wide'}-${compact ? 'phone' : 'desk'}-${wave}`}
             id={piece.id}
             kind={piece.kind}
             home={narrow ? placement.narrow : placement.wide}
@@ -58,6 +75,10 @@ export default function Grove({
             scaleMode={scaleMode}
             showTags={showTags}
             knifeMode={knifeMode}
+            bodyScale={bodyScale}
+            phase={leaving ? 'out' : 'in'}
+            dropIn={dropIn}
+            fadeIn={fadeIn}
           />
         )
       })}
@@ -78,6 +99,7 @@ export default function Grove({
           scaleMode={scaleMode}
           showTags={showTags}
           knifeMode={knifeMode}
+          bodyScale={bodyScale}
         />
       ))}
       {fragments.map((fragment) => (
@@ -97,6 +119,7 @@ export default function Grove({
           scaleMode={scaleMode}
           showTags={showTags}
           knifeMode={knifeMode}
+          bodyScale={bodyScale}
         />
       ))}
       <Knife active={knifeMode} onCut={onCut} />

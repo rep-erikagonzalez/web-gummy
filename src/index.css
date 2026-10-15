@@ -63,6 +63,8 @@
   --fruit-seed: #ffe07a;
   --fruit-pit: #c48958;
   --hero-glow: radial-gradient(ellipse 88% 72% at 62% 44%, #1e1e22 0%, #141416 56%, #101012 100%);
+  --header-h: 4.6rem;
+  --gutter: 48px;
 }
 
 *,
