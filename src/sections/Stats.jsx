@@ -1,46 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { FlatBlossom, FlatPear, FlatStarfruit, FlatStrawberry } from '../components/flat-jellies/FlatFruits'
+import { stats } from '../data/content'
 import SectionDecor from './Decor'
-
-const STATS = [
-  {
-    id: 'systems',
-    Fruit: FlatStrawberry,
-    tone: 'berry',
-    mark: 'Ing.',
-    label: 'Ingeniería de Sistemas',
-  },
-  {
-    id: 'masters',
-    Fruit: FlatPear,
-    tone: 'pear',
-    mark: 'MSc',
-    label: 'Maestría en dirección de TI',
-  },
-  {
-    id: 'people',
-    Fruit: FlatBlossom,
-    tone: 'bloom',
-    value: 100,
-    prefix: '+',
-    label: 'personas certificadas',
-  },
-  {
-    id: 'years',
-    Fruit: FlatStarfruit,
-    tone: 'star',
-    value: 9,
-    prefix: '+',
-    label: 'años de experiencia',
-  },
-  {
-    id: 'courses',
-    Fruit: FlatStrawberry,
-    tone: 'berry',
-    value: 4,
-    label: 'cursos de formación digital',
-  },
-]
+import { FRUITS } from './fruits'
 
 function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -122,7 +83,9 @@ export default function Stats() {
       />
       <div className="band-inner">
         <ul className="stat-row">
-          {STATS.map(({ id, Fruit, tone, mark, value, prefix, label }) => (
+          {stats.map(({ id, fruit, tone, mark, value, prefix, label }) => {
+            const Fruit = FRUITS[fruit]
+            return (
             <li key={id} className={`stat-chip tone-${tone}`}>
               <span aria-hidden="true">
                 <Fruit className="stat-fruit" decorative />
@@ -130,7 +93,8 @@ export default function Stats() {
               {mark ? <span className="stat-value">{mark}</span> : <Count to={value} prefix={prefix} active={active} />}
               <p className="stat-label">{label}</p>
             </li>
-          ))}
+            )
+          })}
         </ul>
       </div>
     </section>

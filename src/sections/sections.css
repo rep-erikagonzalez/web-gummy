@@ -339,7 +339,7 @@
   font-size: clamp(1.7rem, 3.6vw, 2.8rem);
 }
 
-.belief p:last-child {
+.belief-copy {
   max-width: 40rem;
   margin: 0;
 }

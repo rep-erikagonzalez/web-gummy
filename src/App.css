@@ -697,3 +697,8 @@
     transform: none;
   }
 }
+
+.nav-pill.is-current {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 10%, var(--pill-bg));
+}

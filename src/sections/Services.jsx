@@ -1,30 +1,9 @@
-import { FlatPear, FlatStarfruit, FlatStrawberry } from '../components/flat-jellies/FlatFruits'
+import { services } from '../data/content'
+import { FlatPear } from '../components/flat-jellies/FlatFruits'
 import SectionDecor from './Decor'
+import { FRUITS } from './fruits'
+import Reveal from './Reveal'
 import SectionTitle from './SectionTitle'
-
-const SERVICES = [
-  {
-    id: 'software',
-    Fruit: FlatStrawberry,
-    tone: 'berry',
-    title: 'Software y sitios que alguien va a abrir',
-    text: 'Desarrollo web, landings, de la idea a algo usable.',
-  },
-  {
-    id: 'systems',
-    Fruit: FlatPear,
-    tone: 'pear',
-    title: 'Sistemas que se hablan',
-    text: 'APIs, integraciones, liderazgo técnico.',
-  },
-  {
-    id: 'teach',
-    Fruit: FlatStarfruit,
-    tone: 'star',
-    title: 'Aprendo y lo enseño',
-    text: 'Formación digital, IA aplicada.',
-  },
-]
 
 export default function Services() {
   return (
@@ -37,11 +16,14 @@ export default function Services() {
         ]}
       />
       <div className="band-inner">
+        <Reveal>
         <SectionTitle id="hago-title" fruit={FlatPear} tone="pear">
-          Qué hago
+          {services.title}
         </SectionTitle>
         <ul className="service-row">
-          {SERVICES.map(({ id, Fruit, tone, title, text }) => (
+          {services.items.map(({ id, fruit, tone, title, text }) => {
+            const Fruit = FRUITS[fruit]
+            return (
             <li key={id} className={`service-card tone-${tone}`}>
               <span aria-hidden="true">
                 <Fruit className="service-fruit" decorative />
@@ -49,8 +31,10 @@ export default function Services() {
               <h3>{title}</h3>
               <p>{text}</p>
             </li>
-          ))}
+            )
+          })}
         </ul>
+        </Reveal>
       </div>
     </section>
   )

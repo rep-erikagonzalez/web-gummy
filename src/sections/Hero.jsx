@@ -291,10 +291,10 @@ export default function Hero({ theme }) {
   }
 
   const hint = knifeMode
-    ? 'KNIFE: arrastra a través de una gominola para cortarla'
+    ? 'KNIFE: arrastra a través de una gomita para cortarla'
     : scaleMode
-      ? 'SCALE: toca una gominola para inflarla'
-      : 'Arrastra una gominola'
+      ? 'SCALE: toca una gomita para inflarla'
+      : 'Arrastra una gomita'
 
   return (
     <section
@@ -357,7 +357,7 @@ export default function Hero({ theme }) {
 
       {webgl ? (
         <>
-          <div className="hero-cats" role="group" aria-label="Añadir gominolas">
+          <div className="hero-cats" role="group" aria-label="Añadir gomitas">
             {CATEGORIES.map((category) => (
               <button key={category.id} type="button" className="hero-pill" onClick={() => spawn(category.id)}>
                 <i className={`dot dot-${category.dot}`} />
@@ -367,7 +367,7 @@ export default function Hero({ theme }) {
           </div>
           <div className="hero-play">
             <p className="hero-hint">{hint}</p>
-            <div className="hero-tools" role="group" aria-label="Física de las gominolas">
+            <div className="hero-tools" role="group" aria-label="Física de las gomitas">
               <button
                 type="button"
                 className={feel === 'hard' ? 'hero-pill is-on' : 'hero-pill'}

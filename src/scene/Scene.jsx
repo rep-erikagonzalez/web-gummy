@@ -198,7 +198,7 @@ export default function Scene({
           gl.toneMapping = THREE.ACESFilmicToneMapping
           gl.toneMappingExposure = theme === 'dark' ? 1.12 : 1.05
           gl.setClearColor(0x000000, 0)
-          gl.domElement.setAttribute('aria-label', 'Gominolas de fruta que puedes arrastrar')
+          gl.domElement.setAttribute('aria-label', 'gomitas de fruta que puedes arrastrar')
           gl.domElement.addEventListener('webglcontextlost', (event) => {
             event.preventDefault()
           })

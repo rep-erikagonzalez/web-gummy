@@ -1,34 +1,9 @@
 import { useState } from 'react'
+import { about } from '../data/content'
 import { FlatPear, FlatStrawberry } from '../components/flat-jellies/FlatFruits'
 import SectionDecor from './Decor'
+import Reveal from './Reveal'
 import SectionTitle from './SectionTitle'
-
-const STUDIES = [
-  {
-    title: 'Maestría en Dirección y Gestión de Tecnologías de la Información (TI)',
-    place: 'Universidad Internacional de La Rioja',
-    when: 'En curso',
-    tone: 'berry',
-  },
-  {
-    title: 'Ingeniería de Sistemas',
-    place: 'Universidad Nacional Abierta y a Distancia',
-    when: '2017–2021',
-    tone: 'pear',
-  },
-  {
-    title: 'Tecnología en Análisis y Desarrollo de Sistemas de Información',
-    place: 'SENA',
-    when: '2014–2016',
-    tone: 'bloom',
-  },
-  {
-    title: 'Bachillerato Técnico en Programación Informática',
-    place: 'Colegio Ciudad Cuba / SENA',
-    when: '2013',
-    tone: 'star',
-  },
-]
 
 export default function About() {
   const [photoReady, setPhotoReady] = useState(true)
@@ -43,8 +18,9 @@ export default function About() {
         ]}
       />
       <div className="band-inner">
+        <Reveal>
         <SectionTitle id="sobre-title" fruit={FlatStrawberry} tone="berry">
-          Sobre mí
+          {about.title}
         </SectionTitle>
         <div className="about-layout">
           <div className="about-side">
@@ -53,13 +29,13 @@ export default function About() {
                 {photoReady ? (
                   <img
                     src="/images/erika.png"
-                    alt="Erika González"
+                    alt={about.photoAlt}
                     width="640"
                     height="640"
                     onError={() => setPhotoReady(false)}
                   />
                 ) : (
-                  <p className="portrait-fallback">[Foto: /images/erika.png]</p>
+                  <p className="portrait-fallback">{about.photoFallback}</p>
                 )}
               </div>
               <span aria-hidden="true">
@@ -67,16 +43,13 @@ export default function About() {
                 <FlatPear className="float-fruit float-pear" decorative />
               </span>
             </div>
-            <p className="about-copy">
-              Llevo años entre código, bases de datos, webs y proyectos. Me gusta aprender, probar y dejar las cosas un
-              poco más simples. No tengo una fórmula: pruebo, me equivoco y vuelvo a intentar.
-            </p>
+            <p className="about-copy">{about.bio}</p>
           </div>
 
-          <div className="about-studies">
-            <h3 className="subsection-title">Formación</h3>
+          <div className="about-studies" id="formacion">
+            <h3 className="subsection-title">{about.studiesTitle}</h3>
             <ol className="timeline">
-              {STUDIES.map((item) => (
+              {about.studies.map((item) => (
                 <li key={item.title}>
                   <span className={`timeline-dot dot-${item.tone}`} aria-hidden="true" />
                   <div>
@@ -89,12 +62,21 @@ export default function About() {
             </ol>
           </div>
 
-          <div className="belief">
-            <h3 className="subsection-title">Cómo veo la tecnología</h3>
-            <p className="belief-line">No quiero hacer tecnología por hacer tecnología.</p>
-            <p>[COMPLETAR: 2 o 3 frases sobre cómo ves la tecnología en el trabajo diario.]</p>
+          <div className="belief" id="tecnologia">
+            <h3 className="subsection-title">{about.beliefTitle}</h3>
+            <p className="belief-line">{about.beliefLine}</p>
+            <p className="belief-copy">{about.belief}</p>
+            <ul className="principle-row">
+              {about.principles.map((item) => (
+                <li key={item.label} className="principle">
+                  <span className={`dot dot-${item.tone}`} aria-hidden="true" />
+                  {item.label}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
+        </Reveal>
       </div>
     </section>
   )

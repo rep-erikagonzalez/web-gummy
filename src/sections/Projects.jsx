@@ -1,79 +1,10 @@
 import { useState } from 'react'
-import { FlatBlossom, FlatPear, FlatStarfruit, FlatStrawberry } from '../components/flat-jellies/FlatFruits'
+import { projects } from '../data/content'
+import { FlatStarfruit } from '../components/flat-jellies/FlatFruits'
 import SectionDecor from './Decor'
+import { FRUITS } from './fruits'
+import Reveal from './Reveal'
 import SectionTitle from './SectionTitle'
-
-const FILTERS = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'publico', label: 'Sector público' },
-  { id: 'integraciones', label: 'Integraciones' },
-  { id: 'ia', label: 'IA' },
-  { id: 'formacion', label: 'Formación' },
-]
-
-const PROJECTS = [
-  {
-    id: 'intraweb',
-    name: 'Intraweb',
-    Fruit: FlatStrawberry,
-    tone: 'berry',
-    tags: ['publico'],
-    problem: '[COMPLETAR: problema que resolvía.]',
-    did: 'Gestión documental usada en la alcaldía y entidades públicas del Quindío.',
-    tech: ['[COMPLETAR: tecnologías.]'],
-    result: '[COMPLETAR: resultado.]',
-    link: '[COMPLETAR: enlace, si hay.]',
-  },
-  {
-    id: 'epa',
-    name: 'Mantenimientos EPA',
-    Fruit: FlatPear,
-    tone: 'pear',
-    tags: [],
-    problem: '[COMPLETAR: problema.]',
-    did: '[COMPLETAR: qué hiciste en Mantenimientos EPA.]',
-    tech: ['[COMPLETAR: tecnologías.]'],
-    result: '[COMPLETAR: resultado.]',
-    link: '[COMPLETAR: enlace, si hay.]',
-    category: '[COMPLETAR: categoría.]',
-  },
-  {
-    id: 'ia-dev',
-    name: 'IA en el desarrollo',
-    Fruit: FlatStarfruit,
-    tone: 'star',
-    tags: ['ia'],
-    problem: '[COMPLETAR: problema.]',
-    did: '[COMPLETAR: qué hiciste con IA en el desarrollo.]',
-    tech: ['[COMPLETAR: tecnologías.]'],
-    result: '[COMPLETAR: resultado.]',
-    link: '[COMPLETAR: enlace, si hay.]',
-  },
-  {
-    id: 'google',
-    name: 'Integraciones con Google',
-    Fruit: FlatBlossom,
-    tone: 'bloom',
-    tags: ['integraciones'],
-    problem: '[COMPLETAR: problema.]',
-    did: '[COMPLETAR: qué integraste con Google.]',
-    tech: ['[COMPLETAR: tecnologías.]'],
-    result: '[COMPLETAR: resultado.]',
-    link: '[COMPLETAR: enlace, si hay.]',
-  },
-  {
-    id: 'formacion',
-    name: 'Formación digital',
-    Fruit: FlatStrawberry,
-    tone: 'berry',
-    tags: ['formacion'],
-    problem: '[COMPLETAR: a quién iba dirigida.]',
-    did: '[COMPLETAR: qué cursos o talleres diste.]',
-    tech: ['[COMPLETAR: tecnologías.]'],
-    result: '+100 personas certificadas.',
-    link: '[COMPLETAR: enlace, si hay.]',
-  },
-]
 
 function reducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -81,7 +12,7 @@ function reducedMotion() {
 
 export default function Projects() {
   const [filter, setFilter] = useState('todos')
-  const visible = PROJECTS.filter((project) => filter === 'todos' || project.tags.includes(filter))
+  const visible = projects.items.filter((project) => filter === 'todos' || project.tags.includes(filter))
 
   const choose = (id) => {
     const apply = () => setFilter(id)
@@ -114,11 +45,12 @@ export default function Projects() {
         ]}
       />
       <div className="band-inner">
+        <Reveal>
         <SectionTitle id="proyectos-title" fruit={FlatStarfruit} tone="star">
-          Proyectos
+          {projects.title}
         </SectionTitle>
-        <div className="filter-row" role="group" aria-label="Filtrar proyectos">
-          {FILTERS.map((item) => (
+        <div className="filter-row" role="group" aria-label={projects.filterLabel}>
+          {projects.filters.map((item) => (
             <button
               key={item.id}
               type="button"
@@ -132,7 +64,7 @@ export default function Projects() {
         </div>
         <ul className="project-grid">
           {visible.map((project) => {
-            const Fruit = project.Fruit
+            const Fruit = FRUITS[project.fruit]
             return (
               <li key={project.id} style={{ viewTransitionName: `project-${project.id}` }}>
                 <article className={`project-card tone-${project.tone}`} onMouseMove={tilt} onMouseLeave={resetTilt}>
@@ -140,12 +72,13 @@ export default function Projects() {
                     <Fruit className="project-fruit" decorative />
                   </span>
                   <h3>{project.name}</h3>
+                  <p className="project-cat">{project.category}</p>
                   <p>
-                    <span className="card-kicker">Problema. </span>
+                    <span className="card-kicker">{projects.labels.problem}. </span>
                     {project.problem}
                   </p>
                   <p>
-                    <span className="card-kicker">Qué hice. </span>
+                    <span className="card-kicker">{projects.labels.did}. </span>
                     {project.did}
                   </p>
                   <ul className="tech-row">
@@ -154,16 +87,20 @@ export default function Projects() {
                     ))}
                   </ul>
                   <p>
-                    <span className="card-kicker">Resultado. </span>
+                    <span className="card-kicker">{projects.labels.result}. </span>
                     {project.result}
                   </p>
-                  {project.category ? <p>{project.category}</p> : null}
-                  <p>{project.link}</p>
+                  {project.link ? (
+                    <p className="project-link">
+                      <a href={project.link}>{project.link}</a>
+                    </p>
+                  ) : null}
                 </article>
               </li>
             )
           })}
         </ul>
+        </Reveal>
       </div>
     </section>
   )
