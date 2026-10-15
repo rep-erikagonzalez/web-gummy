@@ -28,7 +28,7 @@ export default function About() {
               <div className="portrait">
                 {photoReady ? (
                   <img
-                    src="/images/erika.png"
+                    src={`${import.meta.env.BASE_URL}images/erika.png`}
                     alt={about.photoAlt}
                     width="640"
                     height="640"
